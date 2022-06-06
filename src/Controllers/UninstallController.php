@@ -11,9 +11,10 @@ use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\Process\PhpExecutableFinder;
+use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
 
-class UninstallController extends Controller
+
+class UninstallController extends BaseInstallController
 {
 
     public function index()
@@ -60,12 +61,7 @@ class UninstallController extends Controller
         $this->runCommand(["rm", "composer.json"]);
         $this->runCommand(["cp", "composer-clean.json", "composer.json"]);
 
-        $phpBinaryFinder = new PhpExecutableFinder();
-        $phpBinaryPath = $phpBinaryFinder->find();
-
-        $process = new Process(["composer", "update"], null, ["PATH" => '$PATH:' . $phpBinaryPath . ":/usr/local/bin"]);
-        $process->setWorkingDirectory(base_path());
-        $process->run();
+        $this->runComposerUpdate();
 
         $this->cleanDatabase();
 
