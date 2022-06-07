@@ -108,6 +108,21 @@ class InstallController extends BaseInstallController
     }
 
     /* **************************************************
+     * STEP FOUR A - Publish Base Migrations
+     ************************************************** */
+    public function basePublish()
+    {
+        Artisan::call('vendor:publish', [
+            '--provider' => 'Spatie\Permission\PermissionServiceProvider',
+            '--force'    => true
+        ]);
+        $this->addOutput("Spatie published:", true);
+        Artisan::call("optimize:clear");
+        $this->addOutput("All cache cleared:", true);
+        return $this->sendSuccess();
+    }
+
+    /* **************************************************
      * STEP FOUR - Run base migrations
      ************************************************** */
 
@@ -117,11 +132,7 @@ class InstallController extends BaseInstallController
         // This will update adminui vue and styling components
         $this->addOutput("Publishing resources...");
 
-        Artisan::call('vendor:publish', [
-            '--provider' => 'Spatie\Permission\PermissionServiceProvider',
-            '--force'    => true
-        ]);
-        Artisan::call("optimize:clear");
+        sleep(2);
 
         $this->addOutput("Publishing Spatie/Permissions:", true);
         if (Schema::hasTable('permissions') === false) {

@@ -4,7 +4,6 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 
 use ZipArchive;
 use FilesystemIterator;
-use Illuminate\Http\Request;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Illuminate\Routing\Controller;
@@ -12,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
@@ -197,6 +195,12 @@ class BaseInstallController extends Controller
     {
         $phpBinaryFinder = new PhpExecutableFinder();
         $phpBinaryPath = $phpBinaryFinder->find();
+        $composerPath = config()->get('adminui-installer.base_path') . '/lib/composer.phar';
+
+        if (file_exists($composerPath) === false) {
+            $this->addOutput("Unable to find composer.phar. Looking for " . $composerPath);
+            return $this->sendFailed();
+        }
 
         $process = new Process([$phpBinaryPath, "./packages/adminui-installer/lib/composer.phar", "update", "adminui/admin"], null, ["PATH" => '$PATH:/usr/local/bin']);
         $process->setWorkingDirectory(base_path());

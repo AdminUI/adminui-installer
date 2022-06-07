@@ -17,6 +17,7 @@ class AdminUIInstallerServiceProvider extends ServiceProvider
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'adminui-installer');
         $this->loadViewsFrom(__DIR__ . '/views', 'adminui-installer');
         $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
+        config()->set('adminui-installer.base_path', dirname(__DIR__));
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
