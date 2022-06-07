@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use RecursiveIteratorIterator;
 use RecursiveDirectoryIterator;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
@@ -197,7 +198,7 @@ class BaseInstallController extends Controller
         $phpBinaryFinder = new PhpExecutableFinder();
         $phpBinaryPath = $phpBinaryFinder->find();
 
-        $process = new Process([$phpBinaryPath, "./packages/adminui-installer/lib/composer.phar", "update"], null, ["PATH" => '$PATH:/usr/local/bin']);
+        $process = new Process([$phpBinaryPath, "./packages/adminui-installer/lib/composer.phar", "update", "adminui/admin"], null, ["PATH" => '$PATH:/usr/local/bin']);
         $process->setWorkingDirectory(base_path());
         $process->run();
 
@@ -237,13 +238,23 @@ class BaseInstallController extends Controller
         );
     }
 
+    protected function checkDatabase()
+    {
+        try {
+            DB::select('SHOW TABLES');
+            return true;
+        } catch (\Exception $e) {
+            $this->addOutput("Unable to connect to database. Please check your database settings and try again.");
+            return false;
+        }
+    }
+
     protected function sendSuccess()
     {
         return response()->json([
             'status' => 'success',
             'log'   => $this->output
         ]);
-        exit();
     }
 
     protected function sendFailed()
@@ -252,6 +263,5 @@ class BaseInstallController extends Controller
             'status' => 'failed',
             'log'   => $this->output
         ]);
-        exit();
     }
 }

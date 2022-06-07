@@ -29,9 +29,11 @@
     <title>{{ $title ?? 'AdminUI Installer' }}</title>
 </head>
 
-<body class="w-full h-full font-sans text-white">
-    <main
-        class="w-full h-full flex justify-center items-center bg-no-repeat bg-gradient-to-br from-slate-800 to-indigo-900">
+<body class="w-full h-full font-sans text-white relative bg-no-repeat bg-gradient-to-br from-slate-800 to-indigo-900">
+    <div class="absolute inset-0 -z-1 grayscale opacity-40 bg-cover bg-norepeat">
+        <x-adminui-installer::background></x-adminui-installer::background>
+    </div>
+    <main class="w-full h-full flex justify-center items-center">
         <div class="p-8 shadow-lg shadow-black bg-slate-700/50 backdrop-blur rounded mb-8">
             {{ $slot }}
         </div>

@@ -1,12 +1,13 @@
 <x-adminui-installer::layout title="AdminUI Installer: Install">
-    <div class="flex gap-8">
+    <div class="flex gap-8 max-w-xl">
         <div>
             <x-adminui-installer::logo></x-adminui-installer::logo>
         </div>
         <div class="text-white/90">
-            <h1 class="text-3xl font-bold">Welcome to AdminUI</h1>
-            <p class="text-white/70">Some description about the project.</p>
-            <p class="text-white/70">Enter your licence key in the input below to install</p>
+            <h1 class="text-3xl font-bold mb-4">Welcome to AdminUI</h1>
+            <p class="text-white/70 mb-2">Your new Laravel-based CMS and Ecommerce framework</p>
+            <p class="text-white/70">To begin our one-click install, simply enter your licence key in the input below
+                and then click the install button.</p>
         </div>
     </div>
     <div class="mt-8" v-scope>
@@ -26,7 +27,8 @@
                 </div>
             </div>
             <div class="flex justify-between items-center">
-                <div v-text="installMessage" class="text-white/80"></div>
+                <div v-if="installError" v-text="installError" class="text-red-300 max-w-sm"></div>
+                <div v-else v-text="installMessage" class="text-white/80 max-w-sm animate-pulse"></div>
                 <x-adminui-installer::button loading="isInstalling" type="submit">
                     <x-slot:icon>
                         <svg class="w-6 h-6 -ml-1 mr-2" viewBox="0 0 24 24">
@@ -55,11 +57,16 @@
                 error: "",
                 log: [],
                 installMessage: "",
+                installError: "",
                 isInstalling: false,
+                onError() {
+                    this.isInstalling = false;
+                    this.installError = this.log[this.log.length - 1] ?? "An error occurred!";
+                    return false;
+                },
                 async onSubmit() {
-                    this.error = "";
+                    this.error = this.installError = this.version = "";
                     this.isInstalling = true;
-                    this.version = "";
                     this.log = [];
 
                     /* ******************************************
@@ -77,8 +84,7 @@
                     if (stepOneJson?.log) this.log.push(...stepOneJson.log);
                     if (stepOneJson?.data?.version) this.version = stepOneJson.data.version;
                     if (stepOneJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
 

@@ -5,6 +5,7 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 use ZipArchive;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
@@ -35,6 +36,13 @@ class InstallController extends BaseInstallController
         $isInstalled = $this->checkIfInstalled();
         if (true === $isInstalled) {
             $this->addOutput('AdminUI is already installed. Please use the update function from your installation instead');
+            return $this->sendFailed();
+        }
+
+        // Test database connection
+        $hasDbConnection = $this->checkDatabase();
+
+        if (false === $hasDbConnection) {
             return $this->sendFailed();
         }
 
@@ -72,7 +80,7 @@ class InstallController extends BaseInstallController
             Artisan::call("up");
             return $this->sendSuccess();
         } else {
-            $this->addOutput("There was a problem during installation. Please try again later");
+            $this->addOutput("There was a problem extracting the installer. Please try again later");
             Artisan::call("up");
             return $this->sendFailed();
         }
