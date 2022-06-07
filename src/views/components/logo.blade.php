@@ -1,6 +1,6 @@
 @props(['width' => 'w-40'])
 
-<svg id="Layer_1" data-name="Layer 1" class="{{ $width }}" xmlns="http://www.w3.org/2000/svg"
+<svg id="Layer_1" data-name="Layer 1" class="{{ $width }} text-current" xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 168.16 185.5">
     <defs>
         <style>
@@ -11,7 +11,6 @@
             .aui-logo--path {
                 fill: currentColor;
             }
-
         </style>
     </defs>
     <title>aui-logo-colour</title>

@@ -28,8 +28,7 @@ class BaseInstallController extends Controller
         $response = Http::withToken($key)->get(config('adminui-installer.version_endpoint'));
         $response->onError(function () {
             $this->addOutput("Unable to fetch release information from MGMT. Aborting");
-            $this->sendFailed();
-            exit();
+            return $this->sendFailed();
         });
 
         $this->addOutput("Latest available version is " . $response['version']);
@@ -45,8 +44,7 @@ class BaseInstallController extends Controller
             return true;
         } else {
             $this->addOutput("Unable to download install file from MGMT. Aborting install");
-            $this->sendFailed();
-            exit();
+            return $this->sendFailed();
         }
     }
 
@@ -67,8 +65,7 @@ class BaseInstallController extends Controller
 
         if (false === $zipIsValid) {
             $this->addOutput("Could not confirm authenticity of AdminUI package. Aborting");
-            $this->sendFailed();
-            exit();
+            return $this->sendFailed();
         } else {
             $this->addOutput("Validating checksum: package is valid");
             return true;
@@ -156,7 +153,7 @@ class BaseInstallController extends Controller
 
     protected function checkIfInstalled()
     {
-        return class_exists('\AdminUI\AdminUI\Provider') === true;
+        return class_exists('\AdminUI\AdminUI\Provider');
     }
 
     protected function getDirectorySize($path)
@@ -230,6 +227,14 @@ class BaseInstallController extends Controller
                 file_put_contents($path, $file);
             }
         }
+    }
+
+    protected function updateVersionEntry(string $version)
+    {
+        $version = \AdminUI\AdminUI\Models\Configuration::firstOrCreate(
+            ['name' => 'installed_version'],
+            ['section'  => 'private', 'type' => 'text', 'label' => 'Installed Version', 'value' => $version],
+        );
     }
 
     protected function sendSuccess()

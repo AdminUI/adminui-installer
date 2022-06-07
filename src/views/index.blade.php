@@ -25,7 +25,8 @@
                     @{{ error }}&nbsp;
                 </div>
             </div>
-            <div class="flex justify-end">
+            <div class="flex justify-between items-center">
+                <div v-text="installMessage" class="text-white/80"></div>
                 <x-adminui-installer::button loading="isInstalling" type="submit">
                     <x-slot:icon>
                         <svg class="w-6 h-6 -ml-1 mr-2" viewBox="0 0 24 24">
@@ -53,6 +54,7 @@
                 version: "",
                 error: "",
                 log: [],
+                installMessage: "",
                 isInstalling: false,
                 async onSubmit() {
                     this.error = "";
@@ -63,6 +65,7 @@
                     /* ******************************************
                      * STEP ONE
                      ****************************************** */
+                    this.installMessage = "Downloading install package...";
                     const stepOneResult = await fetch("{{ route('adminui.installer.one') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -82,6 +85,7 @@
                     /* ******************************************
                      * STEP TWO
                      ****************************************** */
+                    this.installMessage = `Extracting AdminUI ${this.version} package...`;
                     const stepTwoResult = await fetch("{{ route('adminui.installer.two') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -99,6 +103,7 @@
                     /* ******************************************
                      * STEP THREE
                      ****************************************** */
+                    this.installMessage = "Downloading system dependencies...";
                     const stepThreeResult = await fetch("{{ route('adminui.installer.three') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -116,6 +121,7 @@
                     /* ******************************************
                      * STEP FOUR
                      ****************************************** */
+                    this.installMessage = "Updating database...";
                     const stepFourResult = await fetch("{{ route('adminui.installer.four') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -130,6 +136,7 @@
                     /* ******************************************
                      * STEP FIVE
                      ****************************************** */
+                    this.installMessage = "Installing AdminUI resources";
                     const stepFiveResult = await fetch("{{ route('adminui.installer.five') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -146,6 +153,7 @@
                     /* ******************************************
                      * STEP SIX
                      ****************************************** */
+                    this.installMessage = "Finishing installation";
                     const stepSixResult = await fetch("{{ route('adminui.installer.six') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -157,8 +165,23 @@
                     const stepSixJson = await stepSixResult.json();
                     if (stepSixJson?.log) this.log.push(...stepSixJson.log);
 
+                    let count = 3,
+                        setCountdown;
+                    (setCountdown = () => {
+                        this.installMessage =
+                            `Complete. Redirecting to admin registration page in ${count}`;
+                    })();
+
                     this.isInstalling = false;
-                    window.location.reload("{{ route('adminui.installer.register') }}");
+
+                    let interval = setInterval(() => {
+                        if (count <= 0) {
+                            clearInterval(interval);
+                            window.location.href = "{{ route('adminui.installer.register') }}";
+                        }
+                        setCountdown();
+                        count--;
+                    }, 1000)
                 }
             }).mount()
         </script>

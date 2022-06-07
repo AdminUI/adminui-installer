@@ -17,7 +17,10 @@ class InstallController extends BaseInstallController
 
     public function index()
     {
-        return view('adminui-installer::index');
+        $isInstalled = $this->checkIfInstalled();
+
+        if ($isInstalled) return view('adminui-installer::already-installed');
+        else return view('adminui-installer::index');
     }
 
     /* ******************************************
@@ -169,13 +172,29 @@ class InstallController extends BaseInstallController
 
         Artisan::call('migrate');
         sleep(1);
+
+        if (Storage::exists('media') === false) {
+            Storage::makeDirectory('media');
+        }
+
+        Artisan::call('storage:link');
+
+        if (!Schema::hasTable('sessions')) {
+            Artisan::call('session:table');
+        }
+        if (!Schema::hasTable('jobs')) {
+            Artisan::call('queue:table');
+        }
+
+        $dbSeeder = new \AdminUI\AdminUI\Database\Seeds\DatabaseSeeder();
+        $dbSeeder->run();
         // Update the installed version in the database configurations table
-        $version = \AdminUI\AdminUI\Models\Configuration::firstOrCreate(
-            ['name' => 'installed_version'],
-            ['section'  => 'private', 'type' => 'text', 'label' => 'Installed Version', 'value' => ''],
-        );
-        $version->value = $validated['version'];
-        $version->save();
+        $this->updateVersionEntry($validated['version']);
+
+        // Keep track of each setup run file
+        $setup = new \AdminUI\AdminUI\Models\Setup();
+        $setup->package = 'AdminUI';
+        $setup->save();
 
         $this->addOutput("Exiting maintenance mode:", true);
         $this->addOutput("Install complete");
