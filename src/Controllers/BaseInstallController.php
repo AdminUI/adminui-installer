@@ -196,8 +196,9 @@ class BaseInstallController extends Controller
     {
         $phpBinaryFinder = new PhpExecutableFinder();
         $phpBinaryPath = $phpBinaryFinder->find();
+        $composerPath = config()->get('adminui-installer.base_path') . '/lib/composer.phar';
 
-        $process = new Process([$phpBinaryPath, base_path("vendor/adminui/adminui-installer/lib/composer.phar"), "update"], null, ["PATH" => '$PATH:/usr/local/bin']);
+        $process = new Process([$phpBinaryPath, $composerPath, "update"], null, ["PATH" => '$PATH:/usr/local/bin']);
         $process->setWorkingDirectory(base_path());
         $process->run();
 
