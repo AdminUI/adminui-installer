@@ -121,7 +121,7 @@
                     /* ******************************************
                      * STEP FOUR
                      ****************************************** */
-                    this.installMessage = "Updating database...";
+                    this.installMessage = "Preparing database update...";
                     const stepFourResult = await fetch("{{ route('adminui.installer.four') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -136,24 +136,22 @@
                     /* ******************************************
                      * STEP FIVE
                      ****************************************** */
-                    this.installMessage = "Installing AdminUI resources";
+                    this.installMessage = "Updating database...";
                     const stepFiveResult = await fetch("{{ route('adminui.installer.five') }}", {
                         method: "POST",
                         headers: jsonHeaders,
-                        body: JSON.stringify({
-                            key: this.key,
-                            version: this.version
-                        })
                     });
                     const stepFiveJson = await stepFiveResult.json();
                     if (stepFiveJson?.log) this.log.push(...stepFiveJson.log);
-
-
+                    if (stepFiveJson.status !== "success") {
+                        this.isInstalling = false;
+                        return false;
+                    }
 
                     /* ******************************************
                      * STEP SIX
                      ****************************************** */
-                    this.installMessage = "Finishing installation";
+                    this.installMessage = "Installing AdminUI resources";
                     const stepSixResult = await fetch("{{ route('adminui.installer.six') }}", {
                         method: "POST",
                         headers: jsonHeaders,
@@ -164,6 +162,23 @@
                     });
                     const stepSixJson = await stepSixResult.json();
                     if (stepSixJson?.log) this.log.push(...stepSixJson.log);
+
+
+
+                    /* ******************************************
+                     * STEP SEVEN
+                     ****************************************** */
+                    this.installMessage = "Finishing installation";
+                    const stepSevenResult = await fetch("{{ route('adminui.installer.seven') }}", {
+                        method: "POST",
+                        headers: jsonHeaders,
+                        body: JSON.stringify({
+                            key: this.key,
+                            version: this.version
+                        })
+                    });
+                    const stepSevenJson = await stepSevenResult.json();
+                    if (stepSevenJson?.log) this.log.push(...stepSevenJson.log);
 
                     let count = 3,
                         setCountdown;
