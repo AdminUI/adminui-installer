@@ -253,11 +253,12 @@ class BaseInstallController extends Controller
         }
     }
 
-    protected function sendSuccess()
+    protected function sendSuccess($data = null)
     {
         return response()->json([
             'status' => 'success',
-            'log'   => $this->output
+            'log'   => $this->output,
+            'data'  => $data
         ]);
     }
 

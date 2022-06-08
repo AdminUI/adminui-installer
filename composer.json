@@ -22,7 +22,8 @@
 	],
 	"require": {
 		"php": "^8.0",
-		"illuminate/support": "^9.0"
+		"illuminate/support": "^9.0",
+		"erusev/parsedown": "^1.7.0"
 	},
 	"require-dev": {
 		"orchestra/testbench": "^6.0",

@@ -1,9 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use AdminUI\AdminUIInstaller\Controllers\UpdateController;
 use AdminUI\AdminUIInstaller\Controllers\InstallController;
-use AdminUI\AdminUIInstaller\Controllers\UninstallController;
 use AdminUI\AdminUIInstaller\Controllers\RegisterController;
+use AdminUI\AdminUIInstaller\Controllers\UninstallController;
 
 
 Route::get('/install-adminui',                  [InstallController::class, 'index'])->name('adminui.installer.index');
@@ -19,3 +20,5 @@ Route::get('/install-adminui/register',         [RegisterController::class, 'ind
 Route::post('/install-adminui/register',        [RegisterController::class, 'store']);
 
 Route::get('/uninstall-adminui',                [UninstallController::class, 'index'])->name('adminui.uninstaller');
+
+Route::get('/update-adminui/check',             [UpdateController::class, 'checkUpdate'])->name('adminui.update.check');
