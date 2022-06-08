@@ -272,7 +272,7 @@ class BaseInstallController extends Controller
             return $this->sendFailed();
         }
 
-        $process = new Process([$phpBinaryPath, "./packages/adminui-installer/lib/composer.phar", "update", "adminui/admin"], null, ["PATH" => '$PATH:/usr/local/bin']);
+        $process = new Process([$phpBinaryPath, config('adminui-installer.base_path') . '/lib/composer.phar', "update", "adminui/admin"], null, ["PATH" => '$PATH:/usr/local/bin']);
         $process->setWorkingDirectory(base_path());
         $process->run();
 
