@@ -113,12 +113,12 @@
             } from 'https://unpkg.com/petite-vue?module';
 
             createApp({
-                first_name: "Craig",
-                last_name: "Riley",
-                email: "c.riley@dsmdesign.co.uk",
-                company: "DSM Design Ltd",
-                password: "Dsm2022",
-                password_confirmation: "Dsm2022",
+                first_name: "",
+                last_name: "",
+                email: "",
+                company: "",
+                password: "",
+                password_confirmation: "",
                 errors: {},
                 isLoading: false,
                 registerMessage: "",

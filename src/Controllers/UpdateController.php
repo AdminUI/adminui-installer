@@ -5,22 +5,20 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 use Parsedown;
 use ZipArchive;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Schema;
-use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\Process\PhpExecutableFinder;
 use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
 
 class UpdateController extends BaseInstallController
 {
+    /**
+     * checkUpdate - Route controller for checking update availability
+     *
+     * @param  Request $request
+     * @return JsonResponse
+     */
     public function checkUpdate(Request $request)
     {
-        $Parsedown = new Parsedown();
-
         $installedVersion = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_version')->firstOrCreate(
             ['name'  => 'installed_version'],
             [
@@ -36,16 +34,18 @@ class UpdateController extends BaseInstallController
 
         // Check if update is available
         $updateIsAvailable = version_compare($updateDetails['version'], $installedVersion->value, '>');
+
+        // Calculate if this is a major update for the purpose of warning the user
         $availableMajor = $this->getMajor($updateDetails['version']);
         $installedMajor = $this->getMajor($installedVersion->value);
-
         $isMajor = $availableMajor > $installedMajor;
 
         if (true === $updateIsAvailable) {
+            // Parse the .md format changelog into HTML
             $Parsedown = new Parsedown();
-
             $json = $updateDetails->json();
             $json['changelog'] = $Parsedown->text($json['changelog']);
+
             return $this->sendSuccess(['update' => $json, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
         } else {
             $this->addOutput('You are already using the latest version of AdminUI');
@@ -53,8 +53,98 @@ class UpdateController extends BaseInstallController
         }
     }
 
+    /**
+     * getMajor - Extract the MAJOR version number from a semantic versioning string
+     *
+     * @param  string $version
+     * @return int
+     */
     private function getMajor(string $version): int
     {
         return preg_match('/v?(\d+)\.(\d+)/', $version);
+    }
+
+    /**
+     * updateSystem - Route controller for installing an update
+     *
+     * @param  mixed $request
+     * @return void
+     */
+    public function updateSystem(Request $request)
+    {
+        $validated = $request->validate([
+            'url'   => ['required', 'url'],
+            'version' => ['required', 'string'],
+            'shasum'    => ['required', 'string']
+        ]);
+
+        $this->cleanUpdateDirectory();
+        $this->downloadPackage(config('adminui.licence_key'), $validated['url']);
+        $this->validatePackage($validated['shasum']);
+
+        Artisan::call('down');
+        $this->addOutput("Entering maintenance mode:", true);
+
+        $zipPath = Storage::path($this->zipPath);
+
+        $archive = new ZipArchive;
+        if ($archive->open($zipPath) === true) {
+            $this->addOutput("Extract complete");
+
+            $this->installArchive($archive);
+            $this->migrateAndSeedUpdate();
+            Artisan::call('vendor:publish', [
+                '--provider' => 'AdminUI\AdminUI\Provider',
+                '--tag'      => 'adminui-public',
+                '--force'    => true
+            ]);
+            $this->addOutput("Output:", true);
+            $this->flushCache();
+
+            // Update the installed version in the database configurations table
+            $version = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_version')->first();
+            $version->value = $validated['version'];
+            //$version->save();
+
+            Artisan::call('up');
+            $this->addOutput("Exiting maintenance mode:", true);
+            $this->addOutput("Install complete");
+
+            return $this->sendSuccess();
+        } else {
+            $this->addOutput("There was a problem during installation. Please try again later");
+            return $this->sendFailed();
+        }
+    }
+
+    /**
+     * migrateAndSeedUpdate - Runs the required migration and seed paths for updating AdminUI
+     *
+     * @return void
+     */
+    private function migrateAndSeedUpdate()
+    {
+        sleep(2);
+
+        // Migrate any db updates
+        $this->addOutput("Running DB migrations");
+        Artisan::call('migrate');
+        $this->addOutput("Output:", true);
+
+        // Update database seeds
+        // Update adminui navigation seeds
+        $this->addOutput("Running DB navigation seed");
+        Artisan::call('db:seed', [
+            '--class' => 'AdminUI\AdminUI\Database\Seeds\NavigationTableSeeder',
+        ]);
+        $this->addOutput("Output:", true);
+
+        if (file_exists(base_path('database/seeders/AdminUIUpdateSeeder.php'))) {
+            $this->addOutput("Running DB update seed");
+            Artisan::call('db:seed', [
+                '--class' => 'Database\Seeders\AdminUIUpdateSeeder',
+            ]);
+            $this->addOutput("Output:", true);
+        }
     }
 }

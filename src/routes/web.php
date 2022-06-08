@@ -19,6 +19,8 @@ Route::post('/install-adminui/finish',          [InstallController::class, 'fini
 Route::get('/install-adminui/register',         [RegisterController::class, 'index'])->name('adminui.installer.register');
 Route::post('/install-adminui/register',        [RegisterController::class, 'store']);
 
-Route::get('/uninstall-adminui',                [UninstallController::class, 'index'])->name('adminui.uninstaller');
+// For development purposes only
+// Route::get('/uninstall-adminui',                [UninstallController::class, 'index'])->name('adminui.uninstaller');
 
 Route::get('/update-adminui/check',             [UpdateController::class, 'checkUpdate'])->name('adminui.update.check');
+Route::post('/update-adminui',                  [UpdateController::class, 'updateSystem'])->name('adminui.update.install');

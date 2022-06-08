@@ -4,10 +4,7 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 
 use ZipArchive;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
@@ -108,7 +105,7 @@ class InstallController extends BaseInstallController
     }
 
     /* **************************************************
-     * STEP FOUR A - Publish Base Migrations
+     * STEP FOUR - Publish Base Migrations
      ************************************************** */
     public function basePublish()
     {
@@ -123,7 +120,7 @@ class InstallController extends BaseInstallController
     }
 
     /* **************************************************
-     * STEP FOUR - Run base migrations
+     * STEP FIVE - Run base migrations
      ************************************************** */
 
     public function baseMigrations()
@@ -151,7 +148,7 @@ class InstallController extends BaseInstallController
     }
 
     /* ******************************************
-     * STEP FIVE - Publish AdminUI Resources
+     * STEP SIX - Publish AdminUI Resources
     ****************************************** */
     public function publish()
     {
@@ -181,7 +178,7 @@ class InstallController extends BaseInstallController
     }
 
     /* ******************************************
-     * STEP SIX
+     * STEP SEVEN
     ****************************************** */
     public function finishInstall(Request $request)
     {
@@ -221,6 +218,11 @@ class InstallController extends BaseInstallController
         return $this->sendSuccess();
     }
 
+    /**
+     * updateComposerJson - Adds required entries into the root composer.json file
+     *
+     * @return void
+     */
     private function updateComposerJson()
     {
         $jsonRaw = file_get_contents(base_path('composer.json'));
@@ -252,6 +254,12 @@ class InstallController extends BaseInstallController
         file_put_contents(base_path('composer.json'), $newJsonRaw);
     }
 
+    /**
+     * updateEnvironmentVariables - Adds required entries to the root .env files
+     *
+     * @param  string $licenceKey
+     * @return void
+     */
     private function updateEnvironmentVariables(string $licenceKey)
     {
         $inserts = [

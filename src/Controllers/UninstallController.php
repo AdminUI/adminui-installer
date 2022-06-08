@@ -2,23 +2,24 @@
 
 namespace AdminUI\AdminUIInstaller\Controllers;
 
-use ZipArchive;
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Symfony\Component\Process\Process;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
 
-
+/**
+ * For DEVELOPMENT purpose only
+ */
 class UninstallController extends BaseInstallController
 {
 
     public function index()
     {
+        $debug = config('app.debug') === true;
+        if ($debug === true) {
+            die("Not supported in production mode");
+        }
+
         $installDirectory = 'adminui';
         $packages = Storage::build([
             'driver' => 'local',
@@ -73,7 +74,60 @@ class UninstallController extends BaseInstallController
 
     public function cleanDatabase()
     {
-        $tables = ["messages", "message_media", "activity_logs", "media_folders", "media", "meta_schemas", "navigations", "notifications", "redirects", "sent_emails", "seos", "setups", "states", "tax_rates"];
+        $tables = [
+            "activity_logs",
+            "admin_contacts",
+            "admin_contracts",
+            "admins",
+            "blog_blog_category",
+            "blog_blog_tag",
+            "blog_categories",
+            "blog_comments",
+            "blog_tags",
+            "brand_supplier",
+            "brands",
+            "cart_lines",
+            "carts",
+            "categories",
+            "category_product",
+            "configurations",
+            "countries",
+            "dashboards",
+            "document_product",
+            "email_layouts",
+            "email_variables",
+            "google_categories",
+            "google_category_product",
+            "messages",
+            "message_media",
+            "media_folders",
+            "media",
+            "meta_schemas",
+            "navigations",
+            "notifications",
+            "order_histories",
+            "order_items",
+            "order_statuses",
+            "orders",
+            "pages",
+            "payments",
+            "postage_rates",
+            "postage_types",
+            "postage_zones",
+            "product_descriptions",
+            "product_reviews",
+            "product_statuses",
+            "product_tag",
+            "redirects",
+            "sent_emails",
+            "seos",
+            "setups",
+            "states",
+            "tax_rates",
+            "templates",
+            "widgets",
+            "wishlists"
+        ];
         foreach ($tables as $table) {
             Schema::dropIfExists($table);
         }
