@@ -104,7 +104,7 @@ class UpdateController extends BaseInstallController
             // Update the installed version in the database configurations table
             $version = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_version')->first();
             $version->value = $validated['version'];
-            //$version->save();
+            $version->save();
 
             Artisan::call('up');
             $this->addOutput("Exiting maintenance mode:", true);
