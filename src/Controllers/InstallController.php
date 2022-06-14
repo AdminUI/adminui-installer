@@ -15,6 +15,10 @@ class InstallController extends BaseInstallController
 
     public function index()
     {
+        Artisan::call('down', [
+            '--render' => 'adminui-installer::maintenance'
+        ]);
+
         $isInstalled = $this->checkIfInstalled();
 
         // Test database connection
@@ -137,7 +141,10 @@ class InstallController extends BaseInstallController
 
     public function baseMigrations()
     {
-        Artisan::call('down');
+        Artisan::call('down', [
+            '--render' => 'adminui-installer::maintenance'
+        ]);
+
         // This will update adminui vue and styling components
         $this->addOutput("Publishing resources...");
 

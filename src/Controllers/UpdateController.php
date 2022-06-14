@@ -82,7 +82,9 @@ class UpdateController extends BaseInstallController
         $this->downloadPackage(config('adminui.licence_key'), $validated['url']);
         $this->validatePackage($validated['shasum']);
 
-        Artisan::call('down');
+        Artisan::call('down', [
+            '--render' => 'adminui-installer::maintenance'
+        ]);
         $this->addOutput("Entering maintenance mode:", true);
 
         $zipPath = Storage::path($this->zipPath);
