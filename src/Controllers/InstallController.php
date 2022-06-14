@@ -17,8 +17,20 @@ class InstallController extends BaseInstallController
     {
         $isInstalled = $this->checkIfInstalled();
 
-        if ($isInstalled) return view('adminui-installer::already-installed');
-        else return view('adminui-installer::index');
+        // Test database connection
+        $hasDbConnection = $this->checkDatabase();
+
+        // if no database connection
+        if (false === $hasDbConnection) {
+            return view('adminui-installer::no-database');
+        }
+
+        // if already installed
+        if ($isInstalled) {
+            return view('adminui-installer::already-installed');
+        }
+        // show the installer
+        return view('adminui-installer::index');
     }
 
     /* ******************************************
