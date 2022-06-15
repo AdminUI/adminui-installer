@@ -29,6 +29,11 @@ class UpdateController extends BaseInstallController
             ]
         );
 
+	if (file_exists(base_path('packages/adminui')) === false) {
+            $this->addOutput('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
+            return $this->sendFailed();
+        }
+
         // Fetch the available version from the MGMT server
         $updateDetails = $this->checkLatestRelease(config('adminui.licence_key'));
 
