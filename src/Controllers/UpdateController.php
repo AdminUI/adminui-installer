@@ -29,7 +29,7 @@ class UpdateController extends BaseInstallController
             ]
         );
 
-	if (file_exists(base_path('packages/adminui')) === false) {
+        if (file_exists(base_path('packages/adminui')) === false) {
             $this->addOutput('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
             return $this->sendFailed();
         }
@@ -131,11 +131,13 @@ class UpdateController extends BaseInstallController
      */
     private function migrateAndSeedUpdate()
     {
-        sleep(2);
+        sleep(1);
 
         // Migrate any db updates
         $this->addOutput("Running DB migrations");
-        Artisan::call('migrate');
+        Artisan::call('migrate', [
+            '--force' => true
+        ]);
         $this->addOutput("Output:", true);
 
         // Update database seeds
@@ -143,6 +145,7 @@ class UpdateController extends BaseInstallController
         $this->addOutput("Running DB navigation seed");
         Artisan::call('db:seed', [
             '--class' => 'AdminUI\AdminUI\Database\Seeds\NavigationTableSeeder',
+            '--force' => true
         ]);
         $this->addOutput("Output:", true);
 
@@ -153,5 +156,13 @@ class UpdateController extends BaseInstallController
             ]);
             $this->addOutput("Output:", true);
         }
+    }
+
+    public function refresh()
+    {
+        $this->migrateAndSeedUpdate();
+        Artisan::call('optimize:clear');
+        Artisan::call('optimize');
+        return $this->sendSuccess("Site refreshed");
     }
 }

@@ -23,4 +23,5 @@ Route::post('/install-adminui/register',        [RegisterController::class, 'sto
 // Route::get('/uninstall-adminui',                [UninstallController::class, 'index'])->name('adminui.uninstaller');
 
 Route::get('/update-adminui/check',             [UpdateController::class, 'checkUpdate'])->name('adminui.update.check');
+Route::get('/update-adminui/refresh',                  [UpdateController::class, 'refresh'])->name('adminui.update.refresh');
 Route::post('/update-adminui',                  [UpdateController::class, 'updateSystem'])->name('adminui.update.install');
