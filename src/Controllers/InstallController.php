@@ -15,9 +15,6 @@ class InstallController extends BaseInstallController
 
     public function index()
     {
-        Artisan::call('down', [
-            '--render' => 'adminui-installer::maintenance'
-        ]);
 
         $isInstalled = $this->checkIfInstalled();
 
