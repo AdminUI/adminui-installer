@@ -9,8 +9,7 @@
             <form @submit.prevent="onSubmit">
                 <div class="grid grid-cols-2 gap-x-4">
                     <div>
-                        <x-adminui-installer::input-text model="first_name" placeholder="First Name"
-                            disabled="isLoading">
+                        <x-adminui-installer::input-text model="first_name" placeholder="First Name" disabled="isLoading">
                             <x-slot:icon>
                                 <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24">
                                     <path fill="currentColor"
@@ -47,7 +46,8 @@
                         </x-adminui-installer::error-message>
                     </div>
                     <div class="col-span-2">
-                        <x-adminui-installer::input-text model="email" placeholder="Email Address" disabled="isLoading">
+                        <x-adminui-installer::input-text model="email" placeholder="Email Address"
+                            disabled="isLoading">
                             <x-slot:icon>
                                 <svg class="w-6 h-6 mr-2" viewBox="0 0 24 24">
                                     <path fill="currentColor"
@@ -143,9 +143,10 @@
                                     value = Array.isArray(value) && value.length > 0 ? value[0] : value;
                                     return [key, value];
                                 }));
+                                return false;
                             } else this.errors = {}
 
-                            let count = 3,
+                            let count = 2,
                                 setCountdown;
                             (setCountdown = () => {
                                 this.registerMessage =
