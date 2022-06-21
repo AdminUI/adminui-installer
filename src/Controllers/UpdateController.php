@@ -142,13 +142,14 @@ class UpdateController extends BaseInstallController
 
         // Update database seeds
         // Update adminui navigation seeds
-        $this->addOutput("Running DB navigation seed");
+        $this->addOutput("Running AdminUI seeders");
         Artisan::call('db:seed', [
-            '--class' => 'AdminUI\AdminUI\Database\Seeds\NavigationTableSeeder',
+            '--class' => 'AdminUI\AdminUI\Database\Seeds\DatabaseSeederUpdate',
             '--force' => true
         ]);
         $this->addOutput("Output:", true);
 
+        //  Frontend site specific seeds
         if (file_exists(base_path('database/seeders/AdminUIUpdateSeeder.php'))) {
             $this->addOutput("Running DB update seed");
             Artisan::call('db:seed', [
