@@ -163,6 +163,7 @@ class BaseInstallController extends Controller
         File::move($absoluteSource, $absoluteDestination);
         $this->addOutput("Extracted size is " . $this->getDirectorySize($absoluteDestination));
         $this->addOutput("Moved extracted files");
+        return $absoluteDestination;
     }
 
     /**
@@ -272,7 +273,8 @@ class BaseInstallController extends Controller
             return $this->sendFailed();
         }
 
-        $process = new Process([$phpBinaryPath, config('adminui-installer.base_path') . '/lib/composer.phar', "update"], null, ["PATH" => '$PATH:/usr/local/bin']);
+        $process = new Process([$phpBinaryPath, config('adminui-installer.base_path') . '/lib/composer.phar', "update", "--no-interaction", "--no-scripts"], null, ["PATH" => '$PATH:/usr/local/bin']);
+        $process->setTimeout(300);
         $process->setWorkingDirectory(base_path());
         $process->run();
 
@@ -280,6 +282,7 @@ class BaseInstallController extends Controller
             $this->addOutput("Composer update complete", false, $process->getOutput());
         } else {
             $this->addOutput("Composer error:", false, $process->getErrorOutput());
+            return $this->sendFailed();
         }
     }
 
@@ -338,5 +341,11 @@ class BaseInstallController extends Controller
             'status' => 'failed',
             'log'   => $this->output
         ]);
+    }
+
+    protected function hashLockFileContents(string $root)
+    {
+        $path = $root . "/composer.json";
+        return hash_file('sha256', $path);
     }
 }

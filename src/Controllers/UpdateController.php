@@ -98,7 +98,9 @@ class UpdateController extends BaseInstallController
         if ($archive->open($zipPath) === true) {
             $this->addOutput("Extract complete");
 
-            $this->installArchive($archive);
+            $absoluteDestination = $this->installArchive($archive);
+            $this->checkForComposerUpdate($absoluteDestination);
+
             $this->migrateAndSeedUpdate();
             Artisan::call('vendor:publish', [
                 '--provider' => 'AdminUI\AdminUI\Provider',
@@ -165,5 +167,25 @@ class UpdateController extends BaseInstallController
         Artisan::call('optimize:clear');
         Artisan::call('optimize');
         return $this->sendSuccess("Site refreshed");
+    }
+
+    private function checkForComposerUpdate($packageLocation)
+    {
+        $updateHash = $this->hashLockFileContents($packageLocation);
+        $installedHash = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_composer_hash')->firstOrCreate(
+            ['name'  => 'installed_composer_hash'],
+            [
+                'label' => 'Composer JSON file hash',
+                'value' => '',
+                'section' => 'private',
+                'type'  => 'text'
+            ]
+        );
+
+        if ($updateHash !== $installedHash) {
+            $this->runComposerUpdate();
+            $installedHash->value = $updateHash;
+            $installedHash->save();
+        }
     }
 }

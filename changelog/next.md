@@ -1,0 +1,2 @@
+## Update
+- Updater now verifies changes to the AdminUI install dependencies before deciding whether to run a composer update.
