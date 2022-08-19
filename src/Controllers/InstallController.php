@@ -114,6 +114,13 @@ class InstallController extends BaseInstallController
         $this->addOutput("Migrating Laravel framework", true);
         $this->flushCache();
 
+        Artisan::call('vendor:publish', [
+            '--provider' => 'AdminUI\AdminUI\Provider',
+            '--tag'      => 'adminui-setup-only',
+            '--force'    => true
+        ]);
+        $this->addOutput("Publishing setup:", true);
+
         return $this->sendSuccess();
     }
 
@@ -122,13 +129,6 @@ class InstallController extends BaseInstallController
      ************************************************** */
     public function basePublish()
     {
-        Artisan::call('vendor:publish', [
-            '--provider' => 'AdminUI\AdminUI\Provider',
-            '--tag'      => 'adminui-setup-only',
-            '--force'    => true
-        ]);
-        $this->addOutput("Publishing setup:", true);
-
         Artisan::call('vendor:publish', [
             '--provider' => 'Spatie\Permission\PermissionServiceProvider',
             '--force'    => true
