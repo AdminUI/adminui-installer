@@ -11,7 +11,9 @@
             Once you have updated the .env file please revisit/reload this page.
         </p>
         <p class="mt-8">
-            If you are struggling with your setup, please contact us via the <a href="https://adminui.co.uk" target="_blank">AdminUI website</a>.<br />
+            If you are struggling with your setup, please contact us via the <a href="https://adminui.co.uk"
+                target="_blank">AdminUI website</a>.
+        <p class="mt-8">
             We offer basic installation from only &pound;49.99.
         </p>
     </div>

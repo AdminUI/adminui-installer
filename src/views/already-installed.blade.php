@@ -4,10 +4,11 @@
             <x-adminui-installer::logo width="w-20"></x-adminui-installer::logo>
         </div>
         <p>An AdminUI installation already exists on your system. If you haven't registered an admin account, click the
-            button below. Otherwise, please use the System Update function in your AdminUI software to perform and
+            button below. Otherwise, please use the System Update function in your AdminUI software to perform an
             update.</p>
         <div class="flex justify-end mt-8">
-            <x-adminui-installer::button tag="a" loading="isLoading" href="{{ route('adminui.installer.register') }}">
+            <x-adminui-installer::button tag="a" loading="isLoading"
+                href="{{ route('adminui.installer.register') }}">
                 <x-slot:icon>
                     <svg class="w-6 h-6 -ml-1 mr-2" viewBox="0 0 24 24">
                         <path fill="currentColor"
