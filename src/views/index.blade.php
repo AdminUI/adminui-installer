@@ -168,7 +168,10 @@
                     });
                     const stepSixJson = await stepSixResult.json();
                     if (stepSixJson?.log) this.log.push(...stepSixJson.log);
-
+                    if (stepSixJson.status !== "success") {
+                        this.isInstalling = false;
+                        return false;
+                    }
 
 
                     /* ******************************************
@@ -185,6 +188,10 @@
                     });
                     const stepSevenJson = await stepSevenResult.json();
                     if (stepSevenJson?.log) this.log.push(...stepSevenJson.log);
+                    if (stepSevenJson.status !== "success") {
+                        this.isInstalling = false;
+                        return false;
+                    }
 
                     let count = 3,
                         setCountdown;
