@@ -123,6 +123,13 @@ class InstallController extends BaseInstallController
     public function basePublish()
     {
         Artisan::call('vendor:publish', [
+            '--provider' => 'AdminUI\AdminUI\Provider',
+            '--tag'      => 'adminui-setup-only',
+            '--force'    => true
+        ]);
+        $this->addOutput("Publishing setup:", true);
+
+        Artisan::call('vendor:publish', [
             '--provider' => 'Spatie\Permission\PermissionServiceProvider',
             '--force'    => true
         ]);
@@ -175,12 +182,6 @@ class InstallController extends BaseInstallController
     ****************************************** */
     public function publish()
     {
-        Artisan::call('vendor:publish', [
-            '--provider' => 'AdminUI\AdminUI\Provider',
-            '--tag'      => 'adminui-setup-only',
-            '--force'    => true
-        ]);
-        $this->addOutput("Publishing setup:", true);
 
         Artisan::call('vendor:publish', [
             '--provider' => 'AdminUI\AdminUI\Provider',
