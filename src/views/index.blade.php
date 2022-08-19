@@ -102,8 +102,7 @@
                     const stepTwoJson = await stepTwoResult.json();
                     if (stepTwoJson?.log) this.log.push(...stepTwoJson.log);
                     if (stepTwoJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
                     /* ******************************************
@@ -120,8 +119,7 @@
                     const stepThreeJson = await stepThreeResult.json();
                     if (stepThreeJson?.log) this.log.push(...stepThreeJson.log);
                     if (stepThreeJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
                     /* ******************************************
@@ -135,8 +133,7 @@
                     const stepFourJson = await stepFourResult.json();
                     if (stepFourJson?.log) this.log.push(...stepFourJson.log);
                     if (stepFourJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
                     /* ******************************************
@@ -150,8 +147,7 @@
                     const stepFiveJson = await stepFiveResult.json();
                     if (stepFiveJson?.log) this.log.push(...stepFiveJson.log);
                     if (stepFiveJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
                     /* ******************************************
@@ -169,8 +165,7 @@
                     const stepSixJson = await stepSixResult.json();
                     if (stepSixJson?.log) this.log.push(...stepSixJson.log);
                     if (stepSixJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
 
@@ -189,8 +184,7 @@
                     const stepSevenJson = await stepSevenResult.json();
                     if (stepSevenJson?.log) this.log.push(...stepSevenJson.log);
                     if (stepSevenJson.status !== "success") {
-                        this.isInstalling = false;
-                        return false;
+                        return this.onError();
                     }
 
                     let count = 3,
