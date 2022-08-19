@@ -31,6 +31,11 @@ class UninstallController extends BaseInstallController
             'root' => base_path('app'),
         ]);
 
+        $baseDir = Storage::build([
+            'driver' => 'local',
+            'root' => base_path()
+        ]);
+
         if ($packages->exists($installDirectory)) {
             $packages->deleteDirectory($installDirectory);
         }
@@ -57,10 +62,14 @@ class UninstallController extends BaseInstallController
             $appDir->delete('Http/Middleware/HandleInertiaRequests.php');
         }
 
-        $this->runCommand(["rm,", ".env"]);
-        $this->runCommand(["cp", ".env-clean", ".env"]);
-        $this->runCommand(["rm", "composer.json"]);
-        $this->runCommand(["cp", "composer-clean.json", "composer.json"]);
+        if ($baseDir->exists('.env-clean')) {
+            $this->runCommand(["rm,", ".env"]);
+            $this->runCommand(["cp", ".env-clean", ".env"]);
+        }
+        if ($baseDir->exists('composer-clean.json')) {
+            $this->runCommand(["rm", "composer.json"]);
+            $this->runCommand(["cp", "composer-clean.json", "composer.json"]);
+        }
 
         $this->runComposerUpdate();
 

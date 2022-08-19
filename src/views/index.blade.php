@@ -91,7 +91,7 @@
                     /* ******************************************
                      * STEP TWO
                      ****************************************** */
-                    this.installMessage = `Extracting AdminUI ${this.version} package...`;
+                    this.installMessage = "Extracting AdminUI " + this.version " + package...";
                     const stepTwoResult = await fetch("{{ route('adminui.installer.two') }}", {
                         method: "POST",
                         headers: jsonHeaders,
