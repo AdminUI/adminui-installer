@@ -142,6 +142,11 @@ class InstallController extends BaseInstallController
             '--render' => 'adminui-installer::maintenance'
         ]);
 
+        $baseDir = Storage::build([
+            'driver' => 'local',
+            'root' => base_path('')
+        ]);
+
         // This will update adminui vue and styling components
         $this->addOutput("Publishing resources...");
 
@@ -156,7 +161,9 @@ class InstallController extends BaseInstallController
             }, ARRAY_FILTER_USE_BOTH);
             $foundFlat = array_merge($found);
             $migrationPath = "database/migrations/" . $foundFlat[0]->getFilename();
+            $updatedMigrationPath = preg_replace('/\d{4}_\d{2}_\d{2}/', '2000_01_01', $migrationPath);
             Artisan::call("migrate --path=\"" . $migrationPath . "\"");
+            $baseDir->move($migrationPath, $updatedMigrationPath);
             $this->addOutput("Framework migrate:", true);
         }
         Artisan::call('up');
