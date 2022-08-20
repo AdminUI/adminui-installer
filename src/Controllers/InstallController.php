@@ -169,8 +169,9 @@ class InstallController extends BaseInstallController
             $foundFlat = array_merge($found);
             $migrationPath = "database/migrations/" . $foundFlat[0]->getFilename();
             $updatedMigrationPath = preg_replace('/\d{4}_\d{2}_\d{2}/', '2000_01_01', $migrationPath);
-            Artisan::call("migrate --path=\"" . $migrationPath . "\"");
             $baseDir->move($migrationPath, $updatedMigrationPath);
+            sleep(1);
+            Artisan::call("migrate --path=\"" . $updatedMigrationPath . "\"");
             $this->addOutput("Framework migrate:", true);
         }
         Artisan::call('up');
