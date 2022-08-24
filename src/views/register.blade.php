@@ -138,6 +138,12 @@
                             })
                         }).then(res => res.json())
                         .then(res => {
+                            if (res.exception) {
+                                this.errors = {
+                                    password_confirmation: res.message
+                                };
+                                return false;
+                            }
                             if (res.errors) {
                                 this.errors = Object.fromEntries(Object.entries(res.errors).map(([key, value]) => {
                                     value = Array.isArray(value) && value.length > 0 ? value[0] : value;
