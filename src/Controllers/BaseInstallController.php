@@ -38,24 +38,6 @@ class BaseInstallController extends Controller
     protected $output = [];
 
     /**
-     * checkLatestRelease - Contact MGMT for the latest AdminUI release
-     *
-     * @param  string $key - The client's licence key
-     * @return Response|JsonResponse
-     */
-    protected function checkLatestRelease(string $key)
-    {
-        $response = Http::withToken($key)->get(config('adminui-installer.version_endpoint'));
-        $response->onError(function () {
-            $this->addOutput("Unable to fetch release information from MGMT. Aborting");
-            return $this->sendFailed();
-        });
-
-        $this->addOutput("Latest available version is " . $response['version']);
-        return $response;
-    }
-
-    /**
      * downloadPackage - Download the specified install package from MGMT and get download stats
      *
      * @param  string $key - The client's licence key
@@ -198,16 +180,6 @@ class BaseInstallController extends Controller
     }
 
     /**
-     * checkIfInstalled - verify that AdminUI is installed on the system
-     *
-     * @return boolean
-     */
-    protected function checkIfInstalled()
-    {
-        return class_exists('\AdminUI\AdminUI\Provider');
-    }
-
-    /**
      * cleanUpdateDirectory - Makes sure the temporary install directory is empty
      *
      * @return void
@@ -262,68 +234,12 @@ class BaseInstallController extends Controller
         $this->addOutput("Site optimisation complete");
     }
 
-    protected function runComposerUpdate()
-    {
-        $phpBinaryFinder = new PhpExecutableFinder();
-        $phpBinaryPath = $phpBinaryFinder->find();
-        $composerPath = config()->get('adminui-installer.base_path') . '/lib/composer.phar';
-
-        if (file_exists($composerPath) === false) {
-            $this->addOutput("Unable to find composer.phar. Looking for " . $composerPath);
-            return $this->sendFailed();
-        }
-
-        $process = new Process([$phpBinaryPath, config('adminui-installer.base_path') . '/lib/composer.phar', "update", "--no-interaction", "--no-scripts"], null, ["PATH" => '$PATH:/usr/local/bin']);
-        $process->setTimeout(300);
-        $process->setWorkingDirectory(base_path());
-        $process->run();
-
-        if ($process->isSuccessful()) {
-            $this->addOutput("Composer update complete", false, $process->getOutput());
-        } else {
-            $this->addOutput("Composer error:", false, $process->getErrorOutput());
-            return $this->sendFailed();
-        }
-    }
-
-    protected function setEnvironmentValue($key, $value)
-    {
-        $path = app()->environmentFilePath();
-
-        if (file_exists($path)) {
-            if (getenv($key)) {
-                //replace variable if key exit
-                file_put_contents($path, str_replace(
-                    "$key=" . getenv($key),
-                    "$key=" . '"' . $value . '"',
-                    file_get_contents($path)
-                ));
-            } else {
-                //set if variable key not exit
-                $file   = file($path);
-                $file[] = PHP_EOL . "$key=" . '"' . $value . '"';
-                file_put_contents($path, $file);
-            }
-        }
-    }
-
     protected function updateVersionEntry(string $version)
     {
         $version = \AdminUI\AdminUI\Models\Configuration::firstOrCreate(
             ['name' => 'installed_version'],
             ['section'  => 'private', 'type' => 'text', 'label' => 'Installed Version', 'value' => $version],
         );
-    }
-
-    protected function checkDatabase()
-    {
-        try {
-            DB::select('SHOW TABLES');
-            return true;
-        } catch (\Exception $e) {
-            $this->addOutput("Unable to connect to database. Please check your database settings and try again.");
-            return false;
-        }
     }
 
     protected function sendSuccess($data = null)
@@ -335,10 +251,11 @@ class BaseInstallController extends Controller
         ]);
     }
 
-    protected function sendFailed()
+    protected function sendFailed(string $errorMessage)
     {
         return response()->json([
             'status' => 'failed',
+            'error' => $errorMessage,
             'log'   => $this->output
         ]);
     }

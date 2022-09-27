@@ -8,18 +8,27 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use AdminUI\AdminUIInstaller\Services\DatabaseService;
+use AdminUI\AdminUIInstaller\Services\InstallerService;
+use AdminUI\AdminUIInstaller\Services\ApplicationService;
 use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
 
 class InstallController extends BaseInstallController
 {
+    public function __construct(
+        protected InstallerService $installerService,
+        protected DatabaseService $databaseService,
+        protected ApplicationService $appService
+    ) {
+    }
 
     public function index()
     {
 
-        $isInstalled = $this->checkIfInstalled();
+        $isInstalled = $this->installerService->checkIfInstalled();
 
         // Test database connection
-        $hasDbConnection = $this->checkDatabase();
+        $hasDbConnection = $this->databaseService->check();
 
         // if no database connection
         if (false === $hasDbConnection) {
@@ -43,20 +52,27 @@ class InstallController extends BaseInstallController
             'key' => ['required', 'string']
         ]);
 
-        $isInstalled = $this->checkIfInstalled();
+        $isInstalled = $this->installerService->checkIfInstalled();
+
         if (true === $isInstalled) {
-            $this->addOutput('AdminUI is already installed. Please use the update function from your installation instead');
-            return $this->sendFailed();
+            return $this->sendFailed('AdminUI is already installed. Please use the update function from your installation instead');
         }
 
         // Test database connection
-        $hasDbConnection = $this->checkDatabase();
+        $hasDbConnection = $this->databaseService->check();
 
         if (false === $hasDbConnection) {
-            return $this->sendFailed();
+            return $this->sendFailed("No database connection available. Check your DB settings and try again");
         }
 
-        $installDetails = $this->checkLatestRelease($validated['key']);
+        try {
+            $installDetails = $this->installerService->checkLatestRelease($validated['key']);
+        } catch (\Exception $e) {
+            return $this->sendFailed($e->getMessage());
+        }
+
+        $this->addOutput("Latest available version is " . $installDetails['version']);
+
         $this->downloadPackage($validated['key'], $installDetails['url']);
 
         $packageIsValid = $this->validatePackage($installDetails['shasum']);
@@ -75,24 +91,14 @@ class InstallController extends BaseInstallController
     /* ******************************************
      * STEP TWO
     ****************************************** */
-    public function extractInstaller(Request $request)
+    public function extractInstaller()
     {
-        // Enter maintenance mode
-        Artisan::call("down");
-        $this->addOutput("Entering maintenance mode:", true);
-
-        $zipPath = Storage::path($this->zipPath);
-
-        $archive = new ZipArchive;
-        if ($archive->open($zipPath) === true) {
-            $this->installArchive($archive);
-
-            Artisan::call("up");
+        try {
+            $result = $this->installerService->extract($this->zipPath);
+            $this->addOutput("Successfully extracted download package");
             return $this->sendSuccess();
-        } else {
-            $this->addOutput("There was a problem extracting the installer. Please try again later");
-            Artisan::call("up");
-            return $this->sendFailed();
+        } catch (\Exception $e) {
+            return $this->sendFailed($e->getMessage());
         }
     }
 
@@ -105,14 +111,26 @@ class InstallController extends BaseInstallController
             'key' => ['required', 'string'],
         ]);
 
-        $this->updateEnvironmentVariables($validated['key']);
-        $this->updateComposerJson();
-        sleep(1);
-        $this->runComposerUpdate();
-        sleep(1);
+        try {
+            $this->appService->updateEnvironmentVariables($validated['key']);
+            $this->addOutput("Updated .env file");
+        } catch (\Exception $e) {
+            return $this->sendFailed("There was a problem updating your environment variables");
+        }
+        try {
+            $this->appService->updateComposerJson();
+            $this->addOutput("Added AdminUI to composer.json file");
+        } catch (\Exception $e) {
+            return $this->sendFailed("There was a problem installing AdminUI into your application");
+        }
 
-        $this->addOutput("Migrating Laravel framework", true);
-        $this->flushCache();
+        try {
+            $this->runComposerUpdate();
+            $this->addOutput("Successfully updated dependencies");
+        } catch (\Exception $e) {
+            return $this->sendFailed($e->getMessage());
+        }
+        // $this->flushCache();
 
         return $this->sendSuccess();
     }
@@ -241,66 +259,5 @@ class InstallController extends BaseInstallController
         $this->addOutput("Install complete");
 
         return $this->sendSuccess();
-    }
-
-    /**
-     * updateComposerJson - Adds required entries into the root composer.json file
-     *
-     * @return void
-     */
-    private function updateComposerJson()
-    {
-        $jsonRaw = file_get_contents(base_path('composer.json'));
-        $json = json_decode($jsonRaw, true);
-
-        if (!isset($json['repositories'])) {
-            $json['repositories'] = [];
-        }
-
-        if (array_search('./packages/adminui', array_column($json['repositories'], 'url')) === false) {
-            $json['repositories'][] = [
-                "type" => "path",
-                "url" => "./packages/adminui",
-                "options" => [
-                    "symlink" => true
-                ]
-            ];
-        }
-
-        if (!isset($json['require'])) {
-            $json['require'] = [];
-        }
-
-        if (!isset($json['require']['adminui/adminui'])) {
-            $json['require']['adminui/adminui'] = '@dev';
-        }
-
-        $newJsonRaw = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents(base_path('composer.json'), $newJsonRaw);
-    }
-
-    /**
-     * updateEnvironmentVariables - Adds required entries to the root .env files
-     *
-     * @param  string $licenceKey
-     * @return void
-     */
-    private function updateEnvironmentVariables(string $licenceKey)
-    {
-        $inserts = [
-            'ADMINUI_PREFIX'            => 'admin',
-            'ADMINUI_LICENCE_ENDPOINT'  => 'https://management.adminui.co.uk/api/licence',
-            'ADMINUI_LICENCE_KEY'       => $licenceKey,
-            'ADMINUI_ADDRESS_ENDPOINT'  => 'https://management.adminui.co.uk/api/address',
-            'ADMINUI_UPDATE_ENDPOINT'   => 'https://management.adminui.co.uk/api/update'
-        ];
-
-        foreach ($inserts as $key => $value) {
-            $this->setEnvironmentValue($key, $value);
-        }
-
-        sleep(2);
-        Artisan::call("cache:clear");
-        Artisan::call("config:clear");
     }
 }
