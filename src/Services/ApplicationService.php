@@ -120,16 +120,14 @@ class ApplicationService
 
     /**
      * cleanUpdateDirectory - Makes sure the temporary install directory is empty
-     *
-     * @return void
      */
-    public function cleanUpdateDirectory(): bool
+    public function cleanUpdateDirectory(string $zipPath, $extractPath): bool
     {
-        if (Storage::exists($this->zipPath)) {
-            Storage::delete($this->zipPath);
+        if (Storage::exists($zipPath)) {
+            Storage::delete($zipPath);
         }
-        if (Storage::exists($this->extractPath)) {
-            Storage::deleteDirectory($this->extractPath);
+        if (Storage::exists($extractPath)) {
+            Storage::deleteDirectory($extractPath);
         }
         return true;
     }

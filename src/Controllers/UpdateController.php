@@ -89,7 +89,7 @@ class UpdateController extends BaseInstallController
             'shasum'    => ['required', 'string']
         ]);
 
-        $this->appService->cleanUpdateDirectory();
+        $this->appService->cleanUpdateDirectory($this->zipPath, $this->extractPath);
         $this->installerService->downloadPackage(config('adminui.licence_key'), $validated['url'], $this->zipPath);
         $this->installerService->validatePackage($validated['shasum'], $this->zipPath);
 
