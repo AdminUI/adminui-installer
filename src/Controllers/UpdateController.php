@@ -188,7 +188,7 @@ class UpdateController extends BaseInstallController
         );
 
         if ($updateHash !== $installedHash) {
-            $this->runComposerUpdate();
+            $this->appService->composerUpdate();
             $installedHash->value = $updateHash;
             $installedHash->save();
         }
