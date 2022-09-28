@@ -108,9 +108,11 @@ class InstallerService
 
         if (!Schema::hasTable('sessions')) {
             Artisan::call('session:table');
+            Artisan::call('migrate');
         }
         if (!Schema::hasTable('jobs')) {
             Artisan::call('queue:table');
+            Artisan::call('migrate');
         }
 
         $dbSeeder = new \AdminUI\AdminUI\Database\Seeds\DatabaseSeeder;

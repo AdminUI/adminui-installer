@@ -162,7 +162,7 @@
                             let interval = setInterval(() => {
                                 if (count <= 0) {
                                     clearInterval(interval);
-                                    window.location.href = "{{ route('admin.login') }}";
+                                    window.location.href = "{{ route('admin.home') }}";
                                 }
 
                                 setCountdown();
