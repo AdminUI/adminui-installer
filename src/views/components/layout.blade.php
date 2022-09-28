@@ -30,7 +30,7 @@
 </head>
 
 <body class="w-full h-full font-sans text-white relative bg-no-repeat bg-gradient-to-br from-slate-800 to-indigo-900">
-    <div class="absolute inset-0 -z-1 grayscale opacity-40 bg-cover bg-norepeat">
+    <div class="absolute inset-0 -z-1 grayscale opacity-40 bg-cover bg-norepeat overflow-hidden">
         <x-adminui-installer::background></x-adminui-installer::background>
     </div>
     <main class="w-full h-full flex justify-center items-center">

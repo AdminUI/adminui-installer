@@ -4,6 +4,7 @@ namespace AdminUI\AdminUIInstaller\Services;
 
 use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class ApplicationService
@@ -106,5 +107,30 @@ class ApplicationService
         } else {
             throw new \Exception("Composer error:" . $process->getErrorOutput());
         }
+    }
+
+    public function flushCache()
+    {
+        Artisan::call('optimize:clear');
+        $result = Artisan::output();
+
+        Artisan::call('optimize');
+        return $result;
+    }
+
+    /**
+     * cleanUpdateDirectory - Makes sure the temporary install directory is empty
+     *
+     * @return void
+     */
+    public function cleanUpdateDirectory(): bool
+    {
+        if (Storage::exists($this->zipPath)) {
+            Storage::delete($this->zipPath);
+        }
+        if (Storage::exists($this->extractPath)) {
+            Storage::deleteDirectory($this->extractPath);
+        }
+        return true;
     }
 }

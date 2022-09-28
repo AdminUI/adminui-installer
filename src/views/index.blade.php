@@ -47,6 +47,9 @@
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             }
+            const genericError = { status: 'error', error: 'Server error'};
+
+            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
             import {
                 createApp
@@ -59,9 +62,10 @@
                 installMessage: "",
                 installError: "",
                 isInstalling: false,
-                onError() {
+                onError(errorMessage = null) {
+                    console.log(this.log);
                     this.isInstalling = false;
-                    this.installError = this.log[this.log.length - 1] ?? "An error occurred!";
+                    this.installError = errorMessage ?? "An error occurred!";
                     return false;
                 },
                 async onSubmit() {
@@ -73,18 +77,20 @@
                      * STEP ONE
                      ****************************************** */
                     this.installMessage = "Downloading install package...";
-                    const stepOneResult = await fetch("{{ route('adminui.installer.one') }}", {
+                    const stepOneResult = await fetch("{{ route('adminui.installer.download') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                         body: JSON.stringify({
                             key: this.key
                         })
                     });
-                    const stepOneJson = await stepOneResult.json();
+                    const stepOneJson = await stepOneResult.json().catch(err => {
+                        return genericError;
+                    });;
                     if (stepOneJson?.log) this.log.push(...stepOneJson.log);
                     if (stepOneJson?.data?.version) this.version = stepOneJson.data.version;
                     if (stepOneJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepOneJson.error);
                     }
 
 
@@ -92,69 +98,96 @@
                      * STEP TWO
                      ****************************************** */
                     this.installMessage = `Extracting AdminUI ${this.version} package...`;
-                    const stepTwoResult = await fetch("{{ route('adminui.installer.two') }}", {
+                    const stepTwoResult = await fetch("{{ route('adminui.installer.extract') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                         body: JSON.stringify({
                             key: this.key
                         })
                     });
-                    const stepTwoJson = await stepTwoResult.json();
+                    const stepTwoJson = await stepTwoResult.json().catch(err => {
+                        return genericError;
+                    });
                     if (stepTwoJson?.log) this.log.push(...stepTwoJson.log);
                     if (stepTwoJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepTwoJson.error);
                     }
 
                     /* ******************************************
                      * STEP THREE
                      ****************************************** */
                     this.installMessage = "Downloading system dependencies...";
-                    const stepThreeResult = await fetch("{{ route('adminui.installer.three') }}", {
+                    const stepThreeResult = await fetch("{{ route('adminui.installer.dependencies') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                         body: JSON.stringify({
                             key: this.key,
                         })
                     });
-                    const stepThreeJson = await stepThreeResult.json();
+                    const stepThreeJson = await stepThreeResult.json().catch(err => {
+                        return genericError;
+                    });
                     if (stepThreeJson?.log) this.log.push(...stepThreeJson.log);
                     if (stepThreeJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepThreeJson.error);
+                    }
+
+                    /* ******************************************
+                     * STEP THREE POINT FIVE
+                     ****************************************** */
+                     this.installMessage = "Flushing Cache...";
+                    const stepCacheResult = await fetch("{{ route('adminui.installer.clear-cache') }}", {
+                        method: "POST",
+                        headers: jsonHeaders,
+                        body: JSON.stringify({
+                            key: this.key,
+                        })
+                    });
+                    const stepCacheJson = await stepCacheResult.json().catch(err => {
+                        return genericError;
+                    });
+                    if (stepCacheJson?.log) this.log.push(...stepCacheJson.log);
+                    if (stepCacheJson.status !== "success") {
+                        return this.onError(stepCacheJson.error);
                     }
 
                     /* ******************************************
                      * STEP FOUR
                      ****************************************** */
                     this.installMessage = "Preparing database update...";
-                    const stepFourResult = await fetch("{{ route('adminui.installer.four') }}", {
+                    const stepFourResult = await fetch("{{ route('adminui.installer.base-publish') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                     });
-                    const stepFourJson = await stepFourResult.json();
+                    const stepFourJson = await stepFourResult.json().catch(err => {
+                        return genericError;
+                    });
                     if (stepFourJson?.log) this.log.push(...stepFourJson.log);
                     if (stepFourJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepFourJson.error);
                     }
 
                     /* ******************************************
                      * STEP FIVE
                      ****************************************** */
                     this.installMessage = "Updating database...";
-                    const stepFiveResult = await fetch("{{ route('adminui.installer.five') }}", {
+                    const stepFiveResult = await fetch("{{ route('adminui.installer.base-migrations') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                     });
-                    const stepFiveJson = await stepFiveResult.json();
+                    const stepFiveJson = await stepFiveResult.json().catch(err => {
+                        return genericError;
+                    });
                     if (stepFiveJson?.log) this.log.push(...stepFiveJson.log);
                     if (stepFiveJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepFiveJson.error);
                     }
 
                     /* ******************************************
                      * STEP SIX
                      ****************************************** */
                     this.installMessage = "Installing AdminUI resources";
-                    const stepSixResult = await fetch("{{ route('adminui.installer.six') }}", {
+                    const stepSixResult = await fetch("{{ route('adminui.installer.publish') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                         body: JSON.stringify({
@@ -162,10 +195,12 @@
                             version: this.version
                         })
                     });
-                    const stepSixJson = await stepSixResult.json();
+                    const stepSixJson = await stepSixResult.json().catch(err => {
+                        return genericError;
+                    });
                     if (stepSixJson?.log) this.log.push(...stepSixJson.log);
                     if (stepSixJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepSixJson.error);
                     }
 
 
@@ -173,7 +208,8 @@
                      * STEP SEVEN
                      ****************************************** */
                     this.installMessage = "Finishing installation";
-                    const stepSevenResult = await fetch("{{ route('adminui.installer.seven') }}", {
+                    await sleep(2000);
+                    const stepSevenResult = await fetch("{{ route('adminui.installer.finish') }}", {
                         method: "POST",
                         headers: jsonHeaders,
                         body: JSON.stringify({
@@ -181,10 +217,12 @@
                             version: this.version
                         })
                     });
-                    const stepSevenJson = await stepSevenResult.json();
+                    const stepSevenJson = await stepSevenResult.json().catch(err => {
+                        return genericError;
+                    });
                     if (stepSevenJson?.log) this.log.push(...stepSevenJson.log);
                     if (stepSevenJson.status !== "success") {
-                        return this.onError();
+                        return this.onError(stepSevenJson.error);
                     }
 
                     let count = 3,

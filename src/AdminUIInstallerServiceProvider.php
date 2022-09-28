@@ -2,6 +2,7 @@
 
 namespace AdminUI\AdminUIInstaller;
 
+use AdminUI\AdminUIInstaller\Commands\UninstallCommand;
 use Illuminate\Support\ServiceProvider;
 
 class AdminUIInstallerServiceProvider extends ServiceProvider
@@ -15,8 +16,8 @@ class AdminUIInstallerServiceProvider extends ServiceProvider
          * Optional methods to load your package assets
          */
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'adminui-installer');
-        $this->loadViewsFrom(__DIR__ . '/views', 'adminui-installer');
-        $this->loadRoutesFrom(__DIR__ . '/routes/web.php');
+        $this->loadViewsFrom(__DIR__ . '/Views', 'adminui-installer');
+        $this->loadRoutesFrom(__DIR__ . '/Routes/web.php');
         config()->set('adminui-installer.base_path', dirname(__DIR__));
 
         if ($this->app->runningInConsole()) {
@@ -38,5 +39,11 @@ class AdminUIInstallerServiceProvider extends ServiceProvider
         $this->app->singleton('adminui-installer', function () {
             return new AdminuiInstaller;
         });
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                UninstallCommand::class,
+            ]);
+        }
     }
 }

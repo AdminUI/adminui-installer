@@ -7,10 +7,18 @@ use ZipArchive;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use AdminUI\AdminUIInstaller\Services\InstallerService;
+use AdminUI\AdminUIInstaller\Services\ApplicationService;
 use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
 
 class UpdateController extends BaseInstallController
 {
+    public function __construct(
+        protected ApplicationService $appService,
+        protected InstallerService $installerService
+    ) {
+    }
+
     /**
      * checkUpdate - Route controller for checking update availability
      *
@@ -30,12 +38,12 @@ class UpdateController extends BaseInstallController
         );
 
         if (file_exists(base_path('packages/adminui')) === false) {
-            $this->addOutput('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
-            return $this->sendFailed();
+
+            return $this->sendFailed('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
         }
 
         // Fetch the available version from the MGMT server
-        $updateDetails = $this->checkLatestRelease(config('adminui.licence_key'));
+        $updateDetails = $this->installerService->checkLatestRelease(config('adminui.licence_key'));
 
         // Check if update is available
         $updateIsAvailable = version_compare($updateDetails['version'], $installedVersion->value, '>');
@@ -53,8 +61,7 @@ class UpdateController extends BaseInstallController
 
             return $this->sendSuccess(['update' => $json, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
         } else {
-            $this->addOutput('You are already using the latest version of AdminUI');
-            return $this->sendFailed();
+            return $this->sendFailed("You are already using the latest version of AdminUI");
         }
     }
 
@@ -83,9 +90,9 @@ class UpdateController extends BaseInstallController
             'shasum'    => ['required', 'string']
         ]);
 
-        $this->cleanUpdateDirectory();
-        $this->downloadPackage(config('adminui.licence_key'), $validated['url']);
-        $this->validatePackage($validated['shasum']);
+        $this->appService->cleanUpdateDirectory();
+        $this->installerService->downloadPackage(config('adminui.licence_key'), $validated['url'], $this->zipPath);
+        $this->installerService->validatePackage($validated['shasum'], $this->zipPath);
 
         Artisan::call('down', [
             '--render' => 'adminui-installer::maintenance'
@@ -98,8 +105,8 @@ class UpdateController extends BaseInstallController
         if ($archive->open($zipPath) === true) {
             $this->addOutput("Extract complete");
 
-            $absoluteDestination = $this->installArchive($archive);
-            $this->checkForComposerUpdate($absoluteDestination);
+            $result = $this->installerService->installArchive($archive, $this->extractPath);
+            $this->checkForComposerUpdate($result['destination']);
 
             $this->migrateAndSeedUpdate();
             Artisan::call('vendor:publish', [
@@ -108,7 +115,7 @@ class UpdateController extends BaseInstallController
                 '--force'    => true
             ]);
             $this->addOutput("Output:", true);
-            $this->flushCache();
+            $this->appService->flushCache();
 
             // Update the installed version in the database configurations table
             $version = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_version')->first();
@@ -121,8 +128,7 @@ class UpdateController extends BaseInstallController
 
             return $this->sendSuccess();
         } else {
-            $this->addOutput("There was a problem during installation. Please try again later");
-            return $this->sendFailed();
+            return $this->sendFailed("There was a problem during installation. Please try again later");
         }
     }
 

@@ -4,7 +4,7 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 
 use ZipArchive;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
+
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
@@ -73,18 +73,21 @@ class InstallController extends BaseInstallController
 
         $this->addOutput("Latest available version is " . $installDetails['version']);
 
-        $this->downloadPackage($validated['key'], $installDetails['url']);
+        try {
+            $summary = $this->installerService->downloadPackage($validated['key'], $installDetails['url'], $this->zipPath);
+            $this->addOutput($summary);
+        } catch (\Exception $e) {
+            return $this->sendFailed($e->getMessage());
+        }
 
-        $packageIsValid = $this->validatePackage($installDetails['shasum']);
+        $packageIsValid = $this->installerService->validatePackage($installDetails['shasum'], $this->zipPath);
 
         if ($packageIsValid) {
-            return response()->json([
-                'status' => 'success',
-                'log'   => $this->output,
-                'data'  => [
-                    'version'   => $installDetails['version']
-                ]
+            return $this->sendSuccess([
+                'version'   => $installDetails['version']
             ]);
+        } else {
+            return $this->sendFailed("Unable to validate installer package");
         }
     }
 
@@ -94,8 +97,8 @@ class InstallController extends BaseInstallController
     public function extractInstaller()
     {
         try {
-            $result = $this->installerService->extract($this->zipPath);
-            $this->addOutput("Successfully extracted download package");
+            $result = $this->installerService->extract($this->zipPath, $this->extractPath);
+            $this->addOutput("Successfully extracted download package", false, $result['size']);
             return $this->sendSuccess();
         } catch (\Exception $e) {
             return $this->sendFailed($e->getMessage());
@@ -125,13 +128,23 @@ class InstallController extends BaseInstallController
         }
 
         try {
-            $this->runComposerUpdate();
-            $this->addOutput("Successfully updated dependencies");
+            $output = $this->appService->composerUpdate();
+            $this->addOutput("Successfully updated dependencies", true, $output);
         } catch (\Exception $e) {
             return $this->sendFailed($e->getMessage());
         }
-        // $this->flushCache();
 
+        return $this->sendSuccess();
+    }
+
+    /* **************************************************
+     * STEP THREE POINT FIVE - Flush cache
+     ************************************************** */
+    public function clearCache()
+    {
+        sleep(5);
+        $result = $this->appService->flushCache();
+        $this->addOutput("All cache cleared:", true, $this->cleanOutput($result));
         return $this->sendSuccess();
     }
 
@@ -141,7 +154,6 @@ class InstallController extends BaseInstallController
     public function basePublish()
     {
         Artisan::call('vendor:publish', [
-            '--provider' => 'AdminUI\AdminUI\Provider',
             '--tag'      => 'adminui-setup-only',
             '--force'    => true
         ]);
@@ -167,32 +179,17 @@ class InstallController extends BaseInstallController
             '--render' => 'adminui-installer::maintenance'
         ]);
 
-        $baseDir = Storage::build([
-            'driver' => 'local',
-            'root' => base_path('')
-        ]);
+        $this->addOutput("Publishing Spatie/Permissions");
 
-        // This will update adminui vue and styling components
-        $this->addOutput("Publishing resources...");
-
-        sleep(2);
-
-        $this->addOutput("Publishing Spatie/Permissions:", true);
-        if (Schema::hasTable('permissions') === false) {
-            $path = base_path("database/migrations");
-            $files = File::allFiles($path);
-            $found = array_filter($files, function ($v, $k) {
-                return preg_match("/create_permission_tables.php$/", $v);
-            }, ARRAY_FILTER_USE_BOTH);
-            $foundFlat = array_merge($found);
-            $migrationPath = "database/migrations/" . $foundFlat[0]->getFilename();
-            $updatedMigrationPath = preg_replace('/\d{4}_\d{2}_\d{2}/', '2000_01_01', $migrationPath);
-            $baseDir->move($migrationPath, $updatedMigrationPath);
-            sleep(1);
-            Artisan::call("migrate --path=\"" . $updatedMigrationPath . "\"");
-            $this->addOutput("Framework migrate:", true);
+        try {
+            $this->databaseService->spatieMigrations();
+            Artisan::call("optimize:clear");
+        } catch (\Exception $e) {
+            return $this->sendFailed($e->getMessage());
         }
+
         Artisan::call('up');
+
         return $this->sendSuccess();
     }
 
@@ -203,20 +200,18 @@ class InstallController extends BaseInstallController
     {
 
         Artisan::call('vendor:publish', [
-            '--provider' => 'AdminUI\AdminUI\Provider',
             '--tag'      => 'adminui-public',
             '--force'    => true
         ]);
         $this->addOutput("Publishing public:", true);
 
         Artisan::call('vendor:publish', [
-            '--provider' => 'AdminUI\AdminUI\Provider',
             '--tag'      => 'adminui-config',
             '--force'    => true
         ]);
         $this->addOutput("Publishing config:", true);
 
-        $this->flushCache();
+        $this->appService->flushCache();
         return $this->sendSuccess();
     }
 
@@ -229,35 +224,12 @@ class InstallController extends BaseInstallController
             'version'   => ['required', 'string']
         ]);
 
-        Artisan::call('migrate');
-        sleep(1);
-
-        if (Storage::exists('media') === false) {
-            Storage::makeDirectory('media');
+        try {
+            $this->installerService->finish($validated);
+            $this->addOutput("Install complete");
+            return $this->sendSuccess();
+        } catch (\Exception $e) {
+            return $this->sendFailed($e->getMessage());
         }
-
-        Artisan::call('storage:link');
-
-        if (!Schema::hasTable('sessions')) {
-            Artisan::call('session:table');
-        }
-        if (!Schema::hasTable('jobs')) {
-            Artisan::call('queue:table');
-        }
-
-        $dbSeeder = new \AdminUI\AdminUI\Database\Seeds\DatabaseSeeder();
-        $dbSeeder->run();
-        // Update the installed version in the database configurations table
-        $this->updateVersionEntry($validated['version']);
-
-        // Keep track of each setup run file
-        $setup = new \AdminUI\AdminUI\Models\Setup();
-        $setup->package = 'AdminUI';
-        $setup->save();
-
-        $this->addOutput("Exiting maintenance mode:", true);
-        $this->addOutput("Install complete");
-
-        return $this->sendSuccess();
     }
 }
