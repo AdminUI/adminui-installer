@@ -205,12 +205,6 @@ class InstallController extends BaseInstallController
         ]);
         $this->addOutput("Publishing public:", true);
 
-        Artisan::call('vendor:publish', [
-            '--tag'      => 'adminui-config',
-            '--force'    => true
-        ]);
-        $this->addOutput("Publishing config:", true);
-
         $this->appService->flushCache();
         return $this->sendSuccess();
     }
