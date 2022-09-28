@@ -108,9 +108,11 @@ class InstallerService
 
         if (!Schema::hasTable('sessions')) {
             Artisan::call('session:table');
+            Artisan::call('migrate');
         }
         if (!Schema::hasTable('jobs')) {
             Artisan::call('queue:table');
+            Artisan::call('migrate');
         }
 
         $dbSeeder = new \AdminUI\AdminUI\Database\Seeds\DatabaseSeeder;
@@ -228,9 +230,9 @@ class InstallerService
         return round(pow(1024, $base - floor($base)), 1) . $suffix[$f_base];
     }
 
-    protected function updateVersionEntry(string $version)
+    public function updateVersionEntry(string $version = "v0.0.1")
     {
-        $version = \AdminUI\AdminUI\Models\Configuration::updateOrCreate(
+        return \AdminUI\AdminUI\Models\Configuration::updateOrCreate(
             ['name' => 'installed_version'],
             ['section'  => 'private', 'type' => 'text', 'label' => 'Installed Version', 'value' => $version],
         );

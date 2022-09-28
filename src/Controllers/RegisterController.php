@@ -4,6 +4,7 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use AdminUI\AdminUIInstaller\Services\InstallerService;
 use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
@@ -61,6 +62,8 @@ class RegisterController extends BaseInstallController
             foreach ($permissions as $permission) {
                 $admin->givePermissionTo($permission);
             }
+
+            Auth::guard('admin')->login($admin);
 
             return $this->sendSuccess();
         });

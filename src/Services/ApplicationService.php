@@ -109,6 +109,26 @@ class ApplicationService
         }
     }
 
+    public function checkForComposerUpdate($packageLocation)
+    {
+        $updateHash = $this->hashLockFileContents($packageLocation);
+        $installedHash = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_composer_hash')->firstOrCreate(
+            ['name'  => 'installed_composer_hash'],
+            [
+                'label' => 'Composer JSON file hash',
+                'value' => '',
+                'section' => 'private',
+                'type'  => 'text'
+            ]
+        );
+
+        if ($updateHash !== $installedHash) {
+            $this->composerUpdate();
+            $installedHash->value = $updateHash;
+            $installedHash->save();
+        }
+    }
+
     public function flushCache()
     {
         Artisan::call('optimize:clear');
@@ -120,17 +140,28 @@ class ApplicationService
 
     /**
      * cleanUpdateDirectory - Makes sure the temporary install directory is empty
-     *
-     * @return void
      */
-    public function cleanUpdateDirectory(): bool
+    public function cleanUpdateDirectory(string $zipPath, $extractPath): bool
     {
-        if (Storage::exists($this->zipPath)) {
-            Storage::delete($this->zipPath);
+        if (Storage::exists($zipPath)) {
+            Storage::delete($zipPath);
         }
-        if (Storage::exists($this->extractPath)) {
-            Storage::deleteDirectory($this->extractPath);
+        if (Storage::exists($extractPath)) {
+            Storage::deleteDirectory($extractPath);
         }
         return true;
+    }
+
+    public function down()
+    {
+        Artisan::call('down', [
+            '--render' => 'adminui-installer::maintenance'
+        ]);
+    }
+
+    protected function hashLockFileContents(string $root)
+    {
+        $path = $root . "/composer.json";
+        return hash_file('sha256', $path);
     }
 }

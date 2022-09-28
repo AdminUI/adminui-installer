@@ -175,9 +175,7 @@ class InstallController extends BaseInstallController
 
     public function baseMigrations()
     {
-        Artisan::call('down', [
-            '--render' => 'adminui-installer::maintenance'
-        ]);
+        $this->appService->down();
 
         $this->addOutput("Publishing Spatie/Permissions");
 
