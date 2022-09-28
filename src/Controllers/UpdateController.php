@@ -48,18 +48,17 @@ class UpdateController extends BaseInstallController
         // Check if update is available
         $updateIsAvailable = version_compare($updateDetails['version'], $installedVersion->value, '>');
 
-        // Calculate if this is a major update for the purpose of warning the user
-        $availableMajor = $this->getMajor($updateDetails['version']);
-        $installedMajor = $this->getMajor($installedVersion->value);
-        $isMajor = $availableMajor > $installedMajor;
 
         if (true === $updateIsAvailable) {
+            // Calculate if this is a major update for the purpose of warning the user
+            $availableMajor = $this->getMajor($updateDetails['version']);
+            $installedMajor = $this->getMajor($installedVersion->value);
+            $isMajor = $availableMajor > $installedMajor;
             // Parse the .md format changelog into HTML
             $Parsedown = new Parsedown();
-            $json = $updateDetails->json();
-            $json['changelog'] = $Parsedown->text($json['changelog']);
+            $updateDetails['changelog'] = $Parsedown->text($updateDetails['changelog']);
 
-            return $this->sendSuccess(['update' => $json, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
+            return $this->sendSuccess(['update' => $updateDetails, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
         } else {
             return $this->sendFailed("You are already using the latest version of AdminUI");
         }
