@@ -75,10 +75,4 @@ class BaseInstallController extends Controller
             'log'   => $this->output
         ]);
     }
-
-    protected function hashLockFileContents(string $root)
-    {
-        $path = $root . "/composer.json";
-        return hash_file('sha256', $path);
-    }
 }

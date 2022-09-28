@@ -109,6 +109,26 @@ class ApplicationService
         }
     }
 
+    public function checkForComposerUpdate($packageLocation)
+    {
+        $updateHash = $this->hashLockFileContents($packageLocation);
+        $installedHash = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_composer_hash')->firstOrCreate(
+            ['name'  => 'installed_composer_hash'],
+            [
+                'label' => 'Composer JSON file hash',
+                'value' => '',
+                'section' => 'private',
+                'type'  => 'text'
+            ]
+        );
+
+        if ($updateHash !== $installedHash) {
+            $this->composerUpdate();
+            $installedHash->value = $updateHash;
+            $installedHash->save();
+        }
+    }
+
     public function flushCache()
     {
         Artisan::call('optimize:clear');
@@ -130,5 +150,18 @@ class ApplicationService
             Storage::deleteDirectory($extractPath);
         }
         return true;
+    }
+
+    public function down()
+    {
+        Artisan::call('down', [
+            '--render' => 'adminui-installer::maintenance'
+        ]);
+    }
+
+    protected function hashLockFileContents(string $root)
+    {
+        $path = $root . "/composer.json";
+        return hash_file('sha256', $path);
     }
 }
