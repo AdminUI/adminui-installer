@@ -144,7 +144,7 @@ class UpdateController extends BaseInstallController
 
     public function refresh()
     {
-        $this->migrateAndSeedUpdate();
+        $this->dbService->migrateAndSeedUpdate();
         Artisan::call('optimize:clear');
         Artisan::call('optimize');
         return $this->sendSuccess("Site refreshed");
