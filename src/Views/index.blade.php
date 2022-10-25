@@ -35,14 +35,14 @@
                             <path fill="currentColor" d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z" />
                         </svg>
                     </x-slot:icon>
-                    @if (false === $isMigrated)
+                    @if (true === $isMigrated)
                         Continue Install
                     @else
                         Install
                     @endif
                 </x-adminui-installer::button>
             </div>
-            @if (false === $isMigrated)
+            @if (true === $isMigrated)
                 <div class="mt-8 flex items-center rounded border-l-8 border-l-blue-500 bg-blue-500/40 p-4">
                     <div class="mr-4">
                         <div class="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/80">
@@ -73,7 +73,7 @@
             } from 'https://unpkg.com/petite-vue?module'
             createApp({
                 key: "{{ config('adminui-installer.test_key') ?? '' }}",
-                partialInstall: !!{{ false === $isMigrated }},
+                partialInstall: !!@json(true === $isMigrated),
                 version: "",
                 error: "",
                 log: [],
