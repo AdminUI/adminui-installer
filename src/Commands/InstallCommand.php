@@ -69,6 +69,8 @@ class InstallCommand extends Command
         }
 
         $service->extract($this->zipPath, $this->extractPath);
+        $appService->updateComposerJson();
+
         $appService->composerUpdate();
         $appService->flushCache();
 
