@@ -79,7 +79,7 @@ class InstallCommand extends Command
             '--force'    => true
         ]);
 
-        $service->finish($installDetails['version']);
+        $service->updateVersionEntry($installDetails['version']);
 
         print_r("Installation complete!");
     }
