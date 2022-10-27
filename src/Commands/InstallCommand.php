@@ -34,7 +34,7 @@ class InstallCommand extends Command
         $dbService = new DatabaseService;
         $appService = new ApplicationService;
 
-        $key = env('ADMINUI_LICENCE_KE');
+        $key = env('ADMINUI_LICENCE_KEY');
 
         if (empty($key)) {
             print_r("No licence key found. Please enter it as ADMINUI_LICENCE_KEY in your .env file");
