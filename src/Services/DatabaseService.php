@@ -73,6 +73,7 @@ class DatabaseService
             $output[] = "Running DB update seed";
             Artisan::call('db:seed', [
                 '--class' => 'Database\Seeders\AdminUIUpdateSeeder',
+                '--force' => true
             ]);
             $output[] = Artisan::output();
         }
