@@ -58,7 +58,13 @@ class ApplicationService
      */
     public function updateComposerJson()
     {
-        $jsonRaw = file_get_contents(base_path('composer.json'));
+        $filepath = base_path('composer.local.json');
+
+        if (!file_exists($filepath)) {
+            file_put_contents($filepath, "{}");
+        }
+
+        $jsonRaw = file_get_contents($filepath) ?? "{}";
         $json = json_decode($jsonRaw, true);
 
         if (!isset($json['repositories'])) {
@@ -84,7 +90,7 @@ class ApplicationService
         }
 
         $newJsonRaw = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        file_put_contents(base_path('composer.json'), $newJsonRaw);
+        file_put_contents(base_path('composer.local.json'), $newJsonRaw);
     }
 
     public function composerUpdate()

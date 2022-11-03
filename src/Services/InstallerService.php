@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Filesystem\Filesystem;
 
 class InstallerService
 {
@@ -24,6 +24,14 @@ class InstallerService
     public function checkIfInstalled()
     {
         return class_exists('\AdminUI\AdminUI\Provider');
+    }
+
+    /**
+     * checkIfMigrated - verify that AdminUI migration has been run
+     */
+    public function checkIfMigrated(): bool
+    {
+        return Schema::hasTable('permissions') && Schema::hasTable('admins');
     }
 
     /**

@@ -2,8 +2,9 @@
 
 namespace AdminUI\AdminUIInstaller;
 
-use AdminUI\AdminUIInstaller\Commands\UninstallCommand;
 use Illuminate\Support\ServiceProvider;
+use AdminUI\AdminUIInstaller\Commands\InstallCommand;
+use AdminUI\AdminUIInstaller\Commands\UninstallCommand;
 
 class AdminUIInstallerServiceProvider extends ServiceProvider
 {
@@ -42,6 +43,7 @@ class AdminUIInstallerServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                InstallCommand::class,
                 UninstallCommand::class,
             ]);
         }

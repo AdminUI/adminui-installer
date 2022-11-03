@@ -26,6 +26,7 @@ class InstallController extends BaseInstallController
     {
 
         $isInstalled = $this->installerService->checkIfInstalled();
+        $isMigrated = $this->installerService->checkIfMigrated();
 
         // Test database connection
         $hasDbConnection = $this->databaseService->check();
@@ -36,11 +37,14 @@ class InstallController extends BaseInstallController
         }
 
         // if already installed
-        if ($isInstalled) {
+        if ($isInstalled && $isMigrated) {
             return view('adminui-installer::already-installed');
         }
         // show the installer
-        return view('adminui-installer::index');
+        return view('adminui-installer::index', [
+            'isInstalled' => $isInstalled,
+            'isMigrated' => $isMigrated
+        ]);
     }
 
     /* ******************************************
@@ -202,12 +206,6 @@ class InstallController extends BaseInstallController
             '--force'    => true
         ]);
         $this->addOutput("Publishing public:", true);
-
-        Artisan::call('vendor:publish', [
-            '--tag'      => 'adminui-config',
-            '--force'    => true
-        ]);
-        $this->addOutput("Publishing config:", true);
 
         $this->appService->flushCache();
         return $this->sendSuccess();
