@@ -5,6 +5,7 @@ namespace AdminUI\AdminUIInstaller\Controllers;
 use Parsedown;
 use ZipArchive;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use AdminUI\AdminUIInstaller\Services\DatabaseService;
@@ -41,6 +42,8 @@ class UpdateController extends BaseInstallController
 
         if (file_exists(base_path('packages/adminui')) === false) {
             return $this->sendFailed('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
+        } else if (file_exists(base_path('packages/adminui/.git')) === true) {
+            return $this->sendFailed('Can\'t update this copy of AdminUI since it is under version control');
         }
 
         // Fetch the available version from the MGMT server
@@ -84,6 +87,7 @@ class UpdateController extends BaseInstallController
      */
     public function updateSystem(Request $request)
     {
+        $isMaintenance = App::isDownForMaintenance() === true;
         $validated = $request->validate([
             'url'   => ['required', 'url'],
             'version' => ['required', 'string'],
@@ -103,9 +107,12 @@ class UpdateController extends BaseInstallController
             return $this->sendFailed($e->getMessage());
         }
 
-        $this->appService->down();
+        // User could be in maintenance bypass mode, in which case, leave as is
+        if (!$isMaintenance) {
+            $this->appService->down();
+            $this->addOutput("Entering maintenance mode:", true);
+        }
 
-        $this->addOutput("Entering maintenance mode:", true);
 
         $zipPath = Storage::path($this->zipPath);
 
@@ -132,8 +139,10 @@ class UpdateController extends BaseInstallController
             // Update the installed version in the database configurations table
             $this->installerService->updateVersionEntry($validated['version']);
 
-            Artisan::call('up');
-            $this->addOutput("Exiting maintenance mode:", true);
+            if (!$isMaintenance) {
+                Artisan::call('up');
+                $this->addOutput("Exiting maintenance mode:", true);
+            }
             $this->addOutput("Install complete");
 
             return $this->sendSuccess();
@@ -145,8 +154,12 @@ class UpdateController extends BaseInstallController
     public function refresh()
     {
         $this->dbService->migrateAndSeedUpdate();
-        Artisan::call('optimize:clear');
-        Artisan::call('optimize');
+        $this->appService->flushCache();
+        Artisan::call('vendor:publish', [
+            '--provider' => 'AdminUI\AdminUI\Provider',
+            '--tag'      => 'adminui-public',
+            '--force'    => true
+        ]);
         return $this->sendSuccess("Site refreshed");
     }
 }

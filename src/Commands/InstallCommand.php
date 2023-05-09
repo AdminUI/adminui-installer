@@ -13,7 +13,7 @@ class InstallCommand extends Command
 {
     protected $signature = 'adminui:install';
 
-    protected $description = 'Install AdminUI into an existing application';
+    protected $description = 'Install AdminUI into an existing application on a new server';
 
     /**
      * $zipPath - Path to use for the .zip installer relative to default Storage
