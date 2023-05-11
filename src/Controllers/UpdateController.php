@@ -109,8 +109,9 @@ class UpdateController extends BaseInstallController
 
         // User could be in maintenance bypass mode, in which case, leave as is
         if (!$isMaintenance) {
-            $this->appService->down();
+            $bypassKey = $this->appService->down();
             $this->addOutput("Entering maintenance mode:", true);
+            $this->addOutput($bypassKey);
         }
 
 

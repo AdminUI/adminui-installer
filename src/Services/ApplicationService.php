@@ -5,6 +5,7 @@ namespace AdminUI\AdminUIInstaller\Services;
 use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Symfony\Component\Process\PhpExecutableFinder;
 
 class ApplicationService
@@ -160,9 +161,12 @@ class ApplicationService
 
     public function down()
     {
+        $uuid = Str::uuid();
         Artisan::call('down', [
-            '--render' => 'adminui-installer::maintenance'
+            '--render' => 'adminui-installer::maintenance',
+            '--secret' => $uuid
         ]);
+        return $uuid;
     }
 
     protected function hashLockFileContents(string $root)
