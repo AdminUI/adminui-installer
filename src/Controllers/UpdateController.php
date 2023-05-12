@@ -130,7 +130,6 @@ class UpdateController extends BaseInstallController
             }
 
             Artisan::call('vendor:publish', [
-                '--provider' => 'AdminUI\AdminUI\Provider',
                 '--tag'      => 'adminui-public',
                 '--force'    => true
             ]);
@@ -157,7 +156,6 @@ class UpdateController extends BaseInstallController
         $this->dbService->migrateAndSeedUpdate();
         $this->appService->flushCache();
         Artisan::call('vendor:publish', [
-            '--provider' => 'AdminUI\AdminUI\Provider',
             '--tag'      => 'adminui-public',
             '--force'    => true
         ]);
