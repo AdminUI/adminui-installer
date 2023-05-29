@@ -97,7 +97,7 @@ class InstallerService
         $zipIsValid = $this->fileChecksum($shasum, $zipPath);
 
         if (false === $zipIsValid) {
-            throw new \Exception("Could not confirm authenticity of AdminUI package. Aborting");
+            throw new \Exception("Could not confirm authenticity of AdminUI package.");
         }
 
         return true;

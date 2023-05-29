@@ -61,21 +61,18 @@ class DatabaseService
 
         // Update database seeds
         // Update adminui navigation seeds
-        $output[] = "Running AdminUI seeders";
+        $output[] = "Running database seeds";
         Artisan::call('db:seed', [
             '--class' => 'AdminUI\AdminUI\Database\Seeds\DatabaseSeederUpdate',
             '--force' => true
         ]);
-        $output[] = Artisan::output();
 
         //  Frontend site specific seeds
         if (file_exists(base_path('database/seeders/AdminUIUpdateSeeder.php'))) {
-            $output[] = "Running DB update seed";
             Artisan::call('db:seed', [
                 '--class' => 'Database\Seeders\AdminUIUpdateSeeder',
                 '--force' => true
             ]);
-            $output[] = Artisan::output();
         }
         return $output;
     }

@@ -5,6 +5,7 @@ use AdminUI\AdminUIInstaller\Controllers\UpdateController;
 use AdminUI\AdminUIInstaller\Controllers\InstallController;
 use AdminUI\AdminUIInstaller\Controllers\RegisterController;
 use AdminUI\AdminUIInstaller\Controllers\UninstallController;
+use AdminUI\AdminUIInstaller\Controllers\UpdateNextController;
 
 
 Route::get('/install-adminui',                  [InstallController::class, 'index'])->name('adminui.installer.index');
@@ -16,12 +17,16 @@ Route::post('/install-adminui/base-migrations', [InstallController::class, 'base
 Route::post('/install-adminui/publish',         [InstallController::class, 'publish'])->name('adminui.installer.publish');
 Route::post('/install-adminui/finish',          [InstallController::class, 'finishInstall'])->name('adminui.installer.finish');
 
-Route::post('/install-adminui/clear-cache',          [InstallController::class, 'clearCache'])->name('adminui.installer.clear-cache');
+Route::post('/install-adminui/clear-cache',     [InstallController::class, 'clearCache'])->name('adminui.installer.clear-cache');
 
 
 Route::get('/install-adminui/register',         [RegisterController::class, 'index'])->name('adminui.installer.register');
 Route::post('/install-adminui/register',        [RegisterController::class, 'store']);
 
 Route::get('/update-adminui/check',             [UpdateController::class, 'checkUpdate'])->name('adminui.update.check');
-Route::get('/update-adminui/refresh',                  [UpdateController::class, 'refresh'])->name('adminui.update.refresh');
+Route::get('/update-adminui/refresh',           [UpdateController::class, 'refresh'])->name('adminui.update.refresh');
 Route::post('/update-adminui',                  [UpdateController::class, 'updateSystem'])->name('adminui.update.install');
+
+Route::get('/update-adminui/next/check',             [UpdateNextController::class, 'checkUpdate'])->name('adminui.update.next.check');
+Route::get('/update-adminui/next/refresh',           [UpdateNextController::class, 'refresh'])->name('adminui.update.next.refresh');
+Route::post('/update-adminui/next',                  [UpdateNextController::class, 'updateSystem'])->name('adminui.update.next.install');

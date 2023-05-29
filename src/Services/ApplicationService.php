@@ -94,29 +94,12 @@ class ApplicationService
         file_put_contents(base_path('composer.local.json'), $newJsonRaw);
     }
 
-    public function composerUpdate()
+    public function composerUpdate($callback = null)
     {
-        $phpBinaryFinder = new PhpExecutableFinder();
-        $phpBinaryPath = $phpBinaryFinder->find();
-        $composerPath = config()->get('adminui-installer.base_path') . '/lib/composer.phar';
-
-        if (file_exists($composerPath) === false) {
-            throw new \Exception("Unable to find composer.phar. Looking for " . $composerPath);
-        }
-
-        $process = new Process([$phpBinaryPath, config('adminui-installer.base_path') . '/lib/composer.phar', "update", "--no-interaction", "--no-scripts"], null, ["PATH" => '$PATH:/usr/local/bin']);
-        $process->setTimeout(300);
-        $process->setWorkingDirectory(base_path());
-        $process->run();
-
-        if ($process->isSuccessful()) {
-            return $process->getOutput();
-        } else {
-            throw new \Exception("Composer error:" . $process->getErrorOutput());
-        }
+        app()->make(\AdminUI\AdminUIInstaller\Helpers\Composer::class)->run(['update', "--no-progress", "--no-audit", "--no-scripts", "--no-interaction"], $callback);
     }
 
-    public function checkForComposerUpdate($packageLocation)
+    public function checkForComposerUpdate($packageLocation, $outputCallback)
     {
         $updateHash = $this->hashLockFileContents($packageLocation);
         $installedHash = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_composer_hash')->firstOrCreate(
@@ -130,10 +113,11 @@ class ApplicationService
         );
 
         if ($updateHash !== $installedHash) {
-            $this->composerUpdate();
+            $this->composerUpdate($outputCallback);
             $installedHash->value = $updateHash;
             $installedHash->save();
-        }
+            return true;
+        } else return false;
     }
 
     public function flushCache()

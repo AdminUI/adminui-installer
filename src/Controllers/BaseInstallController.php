@@ -67,10 +67,10 @@ class BaseInstallController extends Controller
         ]);
     }
 
-    protected function sendFailed(string $errorMessage)
+    protected function sendFailed(string $errorMessage, string $status = "failed")
     {
         return response()->json([
-            'status' => 'failed',
+            'status' => $status,
             'error' => $errorMessage,
             'log'   => $this->output
         ]);
