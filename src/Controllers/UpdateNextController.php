@@ -168,7 +168,7 @@ class UpdateNextController extends BaseInstallController
             $this->appService->flushCache();
 
             // Update the installed version in the database configurations table
-            // $this->installerService->updateVersionEntry($validated['version']);
+            $this->installerService->updateVersionEntry($validated['version']);
             $this->finish("clean");
 
 
