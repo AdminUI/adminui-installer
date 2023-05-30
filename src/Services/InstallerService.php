@@ -128,11 +128,6 @@ class InstallerService
         // Update the installed version in the database configurations table
         $this->updateVersionEntry($data['version']);
 
-        // Keep track of each setup run file
-        $setup = new \AdminUI\AdminUI\Models\Setup();
-        $setup->package = 'AdminUI';
-        $setup->save();
-
         return true;
     }
 

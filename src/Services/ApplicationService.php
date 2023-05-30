@@ -59,6 +59,7 @@ class ApplicationService
      */
     public function updateComposerJson()
     {
+        // LOCAL FILE
         $filepath = base_path('composer.local.json');
 
         if (!file_exists($filepath)) {
@@ -87,11 +88,28 @@ class ApplicationService
         }
 
         if (!isset($json['require']['adminui/adminui'])) {
-            $json['require']['adminui/adminui'] = '@dev';
+            $json['require']['adminui/adminui'] = '*';
         }
 
         $newJsonRaw = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         file_put_contents(base_path('composer.local.json'), $newJsonRaw);
+        unset($jsonRaw);
+        unset($json);
+
+        // MAIN FILE
+        $original = base_path('composer.json');
+        $jsonRaw = file_get_contents($original) ?? "{}";
+        $json = json_decode($jsonRaw, true);
+        if (!isset($json['extra'])) {
+            $json['extra'] = (object) [];
+        }
+        if (!isset($json['extra']["merge-plugin"])) {
+            $json['extra']["merge-plugin"] = (object) [
+                'include' => ['composer.local.json']
+            ];
+        }
+        $newJsonRaw = json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        file_put_contents(base_path('composer.json'), $newJsonRaw);
     }
 
     public function composerUpdate($callback = null)
