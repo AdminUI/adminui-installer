@@ -114,10 +114,6 @@ class InstallerService
 
         Artisan::call('storage:link');
 
-        if (!Schema::hasTable('sessions')) {
-            Artisan::call('session:table');
-            Artisan::call('migrate');
-        }
         if (!Schema::hasTable('jobs')) {
             Artisan::call('queue:table');
             Artisan::call('migrate');
