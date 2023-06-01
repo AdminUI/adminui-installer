@@ -117,7 +117,7 @@ class ApplicationService
         app()->make(\AdminUI\AdminUIInstaller\Helpers\Composer::class)->run(['update', "--no-progress", "--no-audit", "--no-scripts", "--no-interaction"], $callback);
     }
 
-    public function checkForComposerUpdate($packageLocation, $outputCallback)
+    public function checkForComposerUpdate($packageLocation)
     {
         $updateHash = $this->hashLockFileContents($packageLocation);
         $installedHash = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_composer_hash')->firstOrCreate(
