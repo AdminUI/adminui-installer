@@ -10,7 +10,7 @@ use Facades\AdminUI\AdminUIInstaller\Controllers\UninstallController;
 
 class CheckForUpdateCommand extends Command
 {
-    protected $signature = 'adminui:check-update';
+    protected $signature = 'adminui:update';
 
     protected $description = 'Check for AdminUI update';
 
@@ -27,7 +27,7 @@ class CheckForUpdateCommand extends Command
                 AdminUIUpdate::update(fn ($line) => $this->info($line), $details['update']['version']);
             }
         } catch (\Exception $e) {
-            dd($e->getMessage());
+            $this->error($e->getMessage());
         }
     }
 }
