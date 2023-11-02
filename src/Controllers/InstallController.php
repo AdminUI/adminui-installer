@@ -162,6 +162,11 @@ class InstallController extends BaseInstallController
             '--force'    => true
         ]);
         $this->addOutput("Publishing setup:", true);
+        Artisan::call('vendor:publish', [
+            '--tag'      => 'adminui-addons-public',
+            '--force'    => true
+        ]);
+        $this->addOutput("Publishing compiled addons:", true);
 
         Artisan::call('vendor:publish', [
             '--provider' => 'Spatie\Permission\PermissionServiceProvider',

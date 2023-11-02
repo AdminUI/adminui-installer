@@ -2,9 +2,13 @@
 
 namespace AdminUI\AdminUIInstaller;
 
+use AdminUI\AdminUI\Facades\AdminUIUpdate;
+use AdminUI\AdminUIInstaller\Commands\CheckForUpdateCommand;
 use Illuminate\Support\ServiceProvider;
 use AdminUI\AdminUIInstaller\Commands\InstallCommand;
 use AdminUI\AdminUIInstaller\Commands\UninstallCommand;
+use AdminUI\AdminUIInstaller\Services\InstallerService;
+use UpdateService;
 
 class AdminUIInstallerServiceProvider extends ServiceProvider
 {
@@ -41,10 +45,19 @@ class AdminUIInstallerServiceProvider extends ServiceProvider
             return new AdminuiInstaller;
         });
 
+        $this->app->singleton(AdminUIUpdate::class, function () {
+            return $this->app->make(UpdateService::class);
+        });
+
+        $this->app->singleton(AdminUIInstaller::class, function () {
+            return $this->app->make(InstallerService::class);
+        });
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallCommand::class,
                 UninstallCommand::class,
+                CheckForUpdateCommand::class
             ]);
         }
     }

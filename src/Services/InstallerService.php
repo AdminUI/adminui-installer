@@ -114,10 +114,6 @@ class InstallerService
 
         Artisan::call('storage:link');
 
-        if (!Schema::hasTable('sessions')) {
-            Artisan::call('session:table');
-            Artisan::call('migrate');
-        }
         if (!Schema::hasTable('jobs')) {
             Artisan::call('queue:table');
             Artisan::call('migrate');
@@ -127,11 +123,6 @@ class InstallerService
         $dbSeeder->run();
         // Update the installed version in the database configurations table
         $this->updateVersionEntry($data['version']);
-
-        // Keep track of each setup run file
-        $setup = new \AdminUI\AdminUI\Models\Setup();
-        $setup->package = 'AdminUI';
-        $setup->save();
 
         return true;
     }
