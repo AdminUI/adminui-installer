@@ -74,9 +74,8 @@ class UpdateController extends BaseInstallController
             $this->addOutput($bypassKey);
         }
 
-
         try {
-            $isUpdated = AdminUIUpdate::update(fn ($line, $push = false) => $this->addOutput($line, $push), $validated['version']);
+            AdminUIUpdate::update(fn ($line, $push = false) => $this->addOutput($line, $push), $validated['version'], $isMaintenance);
             return $this->sendSuccess();
         } catch (\Exception $e) {
             return $this->sendFailed($e->getMessage());

@@ -24,7 +24,7 @@ class CheckForUpdateCommand extends Command
 
                 // Download
                 AdminUIInstaller::downloadPackage(config('adminui.licence_key'), $url, AdminUIUpdate::getZipPath());
-                AdminUIUpdate::update(fn ($line) => $this->info($line), $details['update']['version']);
+                AdminUIUpdate::update(fn ($line) => $this->info($line), $details['update']['version'], false);
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
