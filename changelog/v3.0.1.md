@@ -1,0 +1,2 @@
+- **BugFix**: Wrong provider on composer file
+- **Chore**: Changed author info to evoMark
