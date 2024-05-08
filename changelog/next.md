@@ -1,1 +1,0 @@
-- **BugFix**: Fix Laravel version in composer file
