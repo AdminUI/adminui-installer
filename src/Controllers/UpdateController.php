@@ -2,94 +2,159 @@
 
 namespace AdminUI\AdminUIInstaller\Controllers;
 
-use Parsedown;
-use ZipArchive;
+use AdminUI\AdminUIInstaller\Actions\CleanupInstallAction;
+use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
+use AdminUI\AdminUIInstaller\Actions\MaintenanceModeEnterAction;
+use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
+use AdminUI\AdminUIInstaller\Actions\SeedDatabaseUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
+use AdminUI\AdminUIInstaller\Actions\ValidateDownloadAction;
+use AdminUI\AdminUIInstaller\Traits\SlimJsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Storage;
-use AdminUI\AdminUIInstaller\Services\DatabaseService;
-use AdminUI\AdminUIInstaller\Services\InstallerService;
-use AdminUI\AdminUIInstaller\Services\ApplicationService;
-use AdminUI\AdminUIInstaller\Controllers\BaseInstallController;
-use AdminUI\AdminUIInstaller\Facades\AdminUIUpdate;
+use Parsedown;
 
-class UpdateController extends BaseInstallController
+class UpdateController extends Controller
 {
-    public function __construct(
-        protected ApplicationService $appService,
-        protected DatabaseService $dbService,
-        protected InstallerService $installerService
-    ) {
-    }
+    use SlimJsonResponse;
 
     /**
-     * checkUpdate - Route controller for checking update availability
-     *
-     * @param  Request $request
-     * @return JsonResponse
+     * Check for an available update for AdminUI
      */
-    public function checkUpdate(Request $request)
+    public function check(GetLatestReleaseDetailsAction $releaseAction)
     {
-        try {
-            $details = AdminUIUpdate::check();
-            return $this->sendSuccess($details);
-        } catch (\Exception $e) {
-            return $this->sendFailed($e->getMessage());
+        $installedVersion = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_version')->firstOrCreate(
+            ['name' => 'installed_version'],
+            [
+                'label' => 'Installed Version',
+                'value' => 'v0.0.1',
+                'section' => 'private',
+                'type' => 'text',
+            ]
+        );
+
+        if (file_exists(base_path('packages/adminui')) === false) {
+            throw new \Exception('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
+        } elseif (file_exists(base_path('packages/adminui/.git')) === true) {
+            throw new \Exception('Can\'t update this copy of AdminUI since it is under version control');
+        }
+
+        $updateDetails = $releaseAction->execute();
+
+        // Check if update is available
+        $updateIsAvailable = version_compare(trim($updateDetails['version'], "v \n\r\t\v\0"), trim($installedVersion->value, "v \n\r\t\v\0"), '>');
+
+        if ($updateIsAvailable === true) {
+            // Calculate if this is a major update for the purpose of warning the user
+            $availableMajor = $this->getMajor($updateDetails['version']);
+            $installedMajor = $this->getMajor($installedVersion->value);
+            $isMajor = $availableMajor > $installedMajor;
+            // Parse the .md format changelog into HTML
+            $Parsedown = new Parsedown();
+            $updateDetails['changelog'] = $Parsedown->text($updateDetails['changelog']);
+
+            return $this->sendSuccess(['update' => $updateDetails, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
+        } else {
+            throw new \Exception('You are already using the latest version of AdminUI');
         }
     }
 
     /**
-     * updateSystem - Route controller for installing an update
-     *
-     * @param  mixed $request
-     * @return void
+     * Refresh the AdminUI website
      */
-    public function updateSystem(Request $request)
-    {
-        $isMaintenance = App::isDownForMaintenance() === true;
-        $validated = $request->validate([
-            'url'   => ['required', 'url'],
-            'version' => ['required', 'string'],
-            'shasum'    => ['required', 'string']
+    public function refresh(
+        RunMigrationsAction $migrationsAction,
+        SeedDatabaseUpdateAction $dbUpdateAction,
+        ComposerUpdateAction $composerUpdateAction
+    ) {
+        $migration = $migrationsAction->execute(update: true);
+        $seed = $dbUpdateAction->execute();
+        Artisan::call('vendor:publish', [
+            '--tag' => 'adminui-public',
+            '--force' => true,
         ]);
 
-        $this->appService->cleanUpdateDirectory($this->zipPath, $this->extractPath);
+        $composer = $composerUpdateAction->execute();
+
+        Artisan::call('optimize:clear');
+
+        return $this->sendSuccess('Site refreshed');
+    }
+
+    /**
+     * Update AdminUI
+     */
+    public function update(
+        Request $request,
+        CleanupInstallAction $cleanupAction,
+        DownloadLatestReleaseAction $downloadAction,
+        ValidateDownloadAction $validateDownloadAction,
+        MaintenanceModeEnterAction $downAction,
+        UnpackReleaseAction $unpackAction,
+        ComposerUpdateAction $composerAction,
+        SeedDatabaseUpdateAction $seedAction,
+        UpdateVersionEntryAction $versionAction
+    ) {
+        $log = [];
+        $isMaintenance = App::isDownForMaintenance() === true;
+        $validated = $request->validate([
+            'url' => ['required', 'url'],
+            'version' => ['required', 'string'],
+            'shasum' => ['required', 'string'],
+        ]);
 
         try {
-            $this->installerService->downloadPackage(config('adminui.licence_key'), $validated['url'], $this->zipPath);
-        } catch (\Exception $e) {
-            return $this->sendFailed($e->getMessage());
-        }
-        try {
-            $this->installerService->validatePackage($validated['shasum'], $this->zipPath);
-        } catch (\Exception $e) {
-            return $this->sendFailed($e->getMessage());
+            $cleanupAction->execute();
+            $downloadAction->execute();
+            $isValid = $validateDownloadAction->execute(checksum: $validated['shasum']);
+        } catch (\Exception $err) {
+            return $this->sendFailed($err->getMessage(), $log);
         }
 
         // User could be in maintenance bypass mode, in which case, leave as is
-        if (!$isMaintenance) {
-            $bypassKey = $this->appService->down();
-            $this->addOutput("Entering maintenance mode:", true);
-            $this->addOutput($bypassKey);
+        if (! $isMaintenance) {
+            $bypassKey = $downAction->execute();
+            $log[] = 'Maintenance mode enabled';
+            $log[] = 'Bypass route is: '.config('app.url').'/'.$bypassKey;
         }
 
         try {
-            AdminUIUpdate::update(fn ($line, $push = false) => $this->addOutput($line, $push), $validated['version'], $isMaintenance);
-            return $this->sendSuccess();
-        } catch (\Exception $e) {
-            return $this->sendFailed($e->getMessage());
+            $unpackAction->execute();
+            $composerAction->execute();
+            $log[] = 'Update dependencies';
+            $seedAction->execute();
+            Artisan::call('vendor:publish', [
+                '--tag' => 'adminui-public',
+                '--force' => true,
+            ]);
+            Artisan::call('optimize:clear');
+            Artisan::call('optimize');
+        } catch (\Exception $err) {
+            return $this->sendFailed($err->getMessage(), $log);
         }
+
+        $versionAction->execute(version: $validated['version']);
+
+        if (! $isMaintenance) {
+            Artisan::call('up');
+            $log[] = 'Maintenance mode disabled';
+        }
+
+        return $this->sendSuccess(log: $log);
     }
 
-    public function refresh()
+    /**
+     * getMajor - Extract the MAJOR version number from a semantic versioning string
+     */
+    private function getMajor(string $version): int
     {
-        $this->dbService->migrateAndSeedUpdate();
-        $this->appService->flushCache();
-        Artisan::call('vendor:publish', [
-            '--tag'      => 'adminui-public',
-            '--force'    => true
-        ]);
-        return $this->sendSuccess("Site refreshed");
+        preg_match('/v?(\d+)\.(\d+)/', $version, $matches);
+
+        return intval($matches[1] ?? 0);
     }
 }

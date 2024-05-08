@@ -1,6 +1,13 @@
-<x-adminui-installer::layout title="Site is not currently available">
+@extends('adminui-installer::layout')
+
+@section('title')
+    Site is not currently available
+@stop
+
+@section('content')
+
     <div class="max-w-xl">
-        <div class="flex justify-center mb-4 transition-colors duration-300">
+        <div class="mb-4 flex justify-center transition-colors duration-300">
             <x-adminui-installer::logo width="w-20"></x-adminui-installer::logo>
         </div>
         <p class="mt-8">
@@ -8,21 +15,21 @@
             Please check back in a few minutes.
         </p>
     </div>
+@stop
 
-    <x-slot:scripts>
-        <script type="module">
-            const jsonHeaders = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+@push('scripts')
+    <script type="module">
+        const jsonHeaders = {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
 
-            import {
-                createApp
-            } from 'https://unpkg.com/petite-vue?module';
+        import {
+            createApp
+        } from 'https://unpkg.com/petite-vue?module';
 
-            createApp({
-                isLoading: false
-            }).mount();
-        </script>
-    </x-slot:scripts>
-</x-adminui-installer::layout>
+        createApp({
+            isLoading: false
+        }).mount();
+    </script>
+@endpush

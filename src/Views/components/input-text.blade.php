@@ -1,12 +1,13 @@
-@props(['model' => '', 'disabled' => '', 'placeholder' => 'Enter here', 'type' => 'text'])
+@props(['model' => '', 'disabled' => 'false', 'placeholder' => 'Enter here', 'type' => 'text'])
 
-<div
-    class="relative flex w-full h-12 bg-white rounded border border-slate-300 focus-within:outline-none focus-within:ring focus-within:ring-blue-400">
+<div class='relative flex h-12 w-full rounded border border-slate-300 bg-white focus-within:outline-none focus-within:ring focus-within:ring-blue-400'
+    v-bind:class="{
+    'opacity-50': {{ $disabled }}
+}">
     <div
-        class="flex w-8 h-full ml-3 leading-snug font-normal text-center text-slate-300 bg-transparent text-base items-center justify-center">
+        class="ml-3 flex h-full w-8 items-center justify-center bg-transparent text-center text-base font-normal leading-snug text-slate-300">
         {{ $icon ?? '' }}
     </div>
-    <input {!! $model ? 'v-model="' . $model . '"' : '' !!} placeholder="{{ $placeholder }}" :disabled="{{ $disabled }}"
-        type="{{ $type }}"
-        class="w-full h-full placeholder-slate-300 text-slate-600 relative text-sm outline-none" />
+    <input {!! $model ? 'v-model="' . $model . '"' : '' !!} placeholder="{{ $placeholder }}" type="{{ $type }}"
+        class="relative h-full w-full text-sm text-slate-600 placeholder-slate-300 outline-none" />
 </div>

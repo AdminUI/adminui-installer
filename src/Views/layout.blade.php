@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="w-full h-full">
+<html lang="en" class="h-full w-full">
 
 <head>
     <meta charset="UTF-8">
@@ -17,28 +17,44 @@
                             'Roboto', '"Helvetica Neue"', 'Arial', '"Noto Sans"', 'sans-serif',
                             '"Apple Color Emoji"', '"Segoe UI Emoji"', '"Segoe UI Symbol"', '"Noto Color Emoji"'
                         ],
+                    },
+                    colors: {
+                        primary: "#dc2626",
+                        panel: "#252529"
                     }
                 }
             }
         }
     </script>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
     <link
         href="https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100;0,300;0,400;0,700;0,900;1,400&display=swap"
         rel="stylesheet">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>{{ $title ?? 'AdminUI Installer' }}</title>
+    <title>@yield('title')</title>
 </head>
 
-<body class="w-full h-full font-sans text-white relative bg-no-repeat bg-gradient-to-br from-slate-800 to-indigo-900">
-    <div class="absolute inset-0 -z-1 grayscale opacity-40 bg-cover bg-norepeat overflow-hidden">
-        <x-adminui-installer::background></x-adminui-installer::background>
+<body class="relative h-full w-full bg-gradient-to-br from-red-500 to-red-800 bg-no-repeat font-sans text-white">
+    <div class="-z-1 bg-norepeat pointer-events-none absolute inset-0 overflow-hidden bg-cover opacity-40 grayscale">
+        <x-adminui-installer::background />
     </div>
-    <main class="w-full h-full flex justify-center items-center">
-        <div class="p-8 shadow-lg shadow-black bg-slate-700/50 backdrop-blur rounded mb-8">
-            {{ $slot }}
+    <main v-scope class="flex h-full w-full items-center justify-center">
+        <div class="bg-panel mx-auto mb-8 max-w-full rounded p-8 shadow-lg shadow-black backdrop-blur">
+            @yield('content')
+        </div>
+        <div v-cloak class="h-full overflow-auto bg-white text-black transition-all duration-500 ease-in-out"
+            v-bind:class="{
+                'w-0': !isInstalling && !installStarted,
+                'w-1/2': isInstalling || installStarted,
+            }">
+            @yield('sidebar')
         </div>
     </main>
-    {{ $scripts ?? '' }}
+    @stack('scripts')
 </body>
 
 </html>

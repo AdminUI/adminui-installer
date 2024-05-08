@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) DSM Design Ltd
+Copyright (c) Evo Mark Ltd
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this installer software and associated documentation files (the "Software"), to deal
