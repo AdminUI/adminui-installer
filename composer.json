@@ -11,12 +11,12 @@
   "authors": [
     {
       "name": "Kenny Turner",
-      "email": "k.turner@dsmdesign.co.uk",
+      "email": "k.turner@evomark.co.uk",
       "role": "Director of Development"
     },
     {
       "name": "Craig Riley",
-      "email": "c.riley@dsmdesign.co.uk",
+      "email": "c.riley@evomark.co.uk",
       "role": "Developer"
     }
   ],
@@ -55,11 +55,8 @@
   "extra": {
     "laravel": {
       "providers": [
-        "AdminUI\\AdminUIInstaller\\AdminUIInstallerServiceProvider"
-      ],
-      "aliases": {
-        "AdminUIInstaller": "AdminUI\\AdminUIInstaller\\AdminUIInstallerFacade"
-      }
+        "AdminUI\\AdminUIInstaller\\Provider"
+      ]
     }
   }
 }

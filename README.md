@@ -18,7 +18,7 @@ For full installation documentation, see [adminui.co.uk](https://adminui.co.uk)
 
 ### Changelog
 
-Please see [CHANGELOG](CHANGELOG.md) for more information what has changed recently.
+Please see [CHANGELOG](changelog) directory for more information what has changed recently.
 
 ### Issues
 
@@ -26,12 +26,12 @@ General issues can be reported at the [AdminUI GitHub issue tracker](https://git
 
 ### Security
 
-If you discover any security related issues, please email k.turner@dsmdesign.co.uk instead of using the issue tracker.
+If you discover any security related issues, please email k.turner@evomark.co.uk instead of using the issue tracker.
 
 ## Credits
 
--   [DSM Design Ltd](https://github.com/adminui)
+- [Evo Mark Ltd](https://github.com/adminui)
 
 ## License
 
-Modified MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+Modified MIT License (MIT). Please see [Licence File](LICENCE.md) for more information.
