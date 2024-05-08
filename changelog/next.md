@@ -1,1 +1,0 @@
-- **BugFix**: Few fixes to install update controller
