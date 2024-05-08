@@ -60,7 +60,7 @@
                     done-text="Found AdminUI ${status.releaseDetails?.version}" />
 
                 <x-adminui-installer::step-status key="downloadRelease"
-                    loading-text="Dowloading version ${status.releaseDetails?.version}"
+                    loading-text="Downloading version ${status.releaseDetails?.version}"
                     done-text="${status.downloadStats}" />
 
                 <x-adminui-installer::step-status key="unpackRelease"
@@ -253,7 +253,9 @@
                         this.status = result.status;
                     }
                 } catch (err) {
-                    this.error = err;
+                    if (typeof err === "string") {
+                        this.error = err;
+                    }
                 }
 
                 setTimeout(() => {
