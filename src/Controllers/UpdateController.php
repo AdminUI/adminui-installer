@@ -39,9 +39,9 @@ class UpdateController extends Controller
         );
 
         if (file_exists(base_path('packages/adminui')) === false) {
-            throw new \Exception('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
+            return $this->sendFailed('Can\'t update this copy of AdminUI since it appears to be outside the packages folder');
         } elseif (file_exists(base_path('packages/adminui/.git')) === true) {
-            throw new \Exception('Can\'t update this copy of AdminUI since it is under version control');
+            return $this->sendFailed('Can\'t update this copy of AdminUI since it is under version control');
         }
 
         $updateDetails = $releaseAction->execute();
@@ -60,7 +60,7 @@ class UpdateController extends Controller
 
             return $this->sendSuccess(['update' => $updateDetails, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
         } else {
-            throw new \Exception('You are already using the latest version of AdminUI');
+            return $this->sendFailed('You are already using the latest version of AdminUI');
         }
     }
 
@@ -117,30 +117,33 @@ class UpdateController extends Controller
         }
 
         // User could be in maintenance bypass mode, in which case, leave as is
-        if (! $isMaintenance) {
+        if (!$isMaintenance) {
             $bypassKey = $downAction->execute();
             $log[] = 'Maintenance mode enabled';
-            $log[] = 'Bypass route is: '.config('app.url').'/'.$bypassKey;
+            $log[] = 'Bypass route is: ' . config('app.url') . '/' . $bypassKey;
         }
 
         try {
             $unpackAction->execute();
             $composerAction->execute();
-            $log[] = 'Update dependencies';
+            $log[] = 'Updated dependencies';
             $seedAction->execute();
+            $log[] = "Ran database seeders";
             Artisan::call('vendor:publish', [
                 '--tag' => 'adminui-public',
                 '--force' => true,
             ]);
+            $log[] = "Published public resources";
             Artisan::call('optimize:clear');
-            Artisan::call('optimize');
+            $log[] = "Cleared application cache";
         } catch (\Exception $err) {
             return $this->sendFailed($err->getMessage(), $log);
         }
 
         $versionAction->execute(version: $validated['version']);
+        $log[] = "Update version number";
 
-        if (! $isMaintenance) {
+        if (!$isMaintenance) {
             Artisan::call('up');
             $log[] = 'Maintenance mode disabled';
         }

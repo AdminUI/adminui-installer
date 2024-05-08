@@ -43,7 +43,7 @@ class InstallController extends Controller
             'licence_key' => ['required', 'string'],
         ]);
 
-        sleep(5);
+        sleep(2);
 
         $action->execute($validated['licence_key']);
 
