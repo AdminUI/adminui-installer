@@ -1,0 +1,1 @@
+- **BugFix**: Fixed composer issue
