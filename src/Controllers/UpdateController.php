@@ -65,26 +65,19 @@ class UpdateController extends Controller
                 );
                 $currentVersion = trim($packageVersion->value, "v \n\r\t\v\0");
                 $package['updateAvailable'] = version_compare(trim($package['latest']['version'], "v \n\r\t\v\0"), $currentVersion, '>');
-<<<<<<< HEAD
 
                 if (!$updateIsAvailable) {
                     $updateMessage = "There are packages with updates available!";
                 }
                 $packageUpdateAvailable = true;
 
-=======
->>>>>>> 099fa2785a117046181fc9f65f744022717be6e3
                 $package['currentVersion'] = $currentVersion;
                 $Parsedown = new Parsedown();
                 $package['latest']['changelog'] = $Parsedown->text($package['latest']['changelog']);
             }
         }
 
-<<<<<<< HEAD
         if ($updateIsAvailable === true || $packageUpdateAvailable) {
-=======
-        if ($updateIsAvailable === true) {
->>>>>>> 099fa2785a117046181fc9f65f744022717be6e3
             // Calculate if this is a major update for the purpose of warning the user
             $availableMajor = $this->getMajor($updateDetails['version']);
             $installedMajor = $this->getMajor($installedVersion->value);
