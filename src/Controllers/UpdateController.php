@@ -2,22 +2,23 @@
 
 namespace AdminUI\AdminUIInstaller\Controllers;
 
-use AdminUI\AdminUIInstaller\Actions\CleanupInstallAction;
-use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
-use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
-use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
-use AdminUI\AdminUIInstaller\Actions\MaintenanceModeEnterAction;
-use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
-use AdminUI\AdminUIInstaller\Actions\SeedDatabaseUpdateAction;
-use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
-use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
-use AdminUI\AdminUIInstaller\Actions\ValidateDownloadAction;
-use AdminUI\AdminUIInstaller\Traits\SlimJsonResponse;
+use Parsedown;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Artisan;
-use Parsedown;
+use AdminUI\AdminUIInstaller\Traits\SlimJsonResponse;
+use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
+use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\CleanupInstallAction;
+use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\ValidateDownloadAction;
+use AdminUI\AdminUIInstaller\Actions\SeedDatabaseUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
+use AdminUI\AdminUIInstaller\Actions\MaintenanceModeEnterAction;
+use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
 
 class UpdateController extends Controller
 {
@@ -48,8 +49,35 @@ class UpdateController extends Controller
 
         // Check if update is available
         $updateIsAvailable = version_compare(trim($updateDetails['version'], "v \n\r\t\v\0"), trim($installedVersion->value, "v \n\r\t\v\0"), '>');
+        $updateMessage = "There is a new version of AdminUI available!";
+        $packageUpdateAvailable = false;
 
-        if ($updateIsAvailable === true) {
+        if (!empty($updateDetails['packages'])) {
+            foreach ($updateDetails['packages'] as &$package) {
+                $packageVersion = \AdminUI\AdminUI\Models\Configuration::firstOrCreate(
+                    ['name' => 'installed_version_' . $package['repo']],
+                    [
+                        'label' => 'Installed Version of ' . Str::headline($package['name']),
+                        'value' => 'v0.0.1',
+                        'section' => 'private',
+                        'type' => 'text',
+                    ]
+                );
+                $currentVersion = trim($packageVersion->value, "v \n\r\t\v\0");
+                $package['updateAvailable'] = version_compare(trim($package['latest']['version'], "v \n\r\t\v\0"), $currentVersion, '>');
+
+                if (!$updateIsAvailable) {
+                    $updateMessage = "There are packages with updates available!";
+                }
+                $packageUpdateAvailable = true;
+
+                $package['currentVersion'] = $currentVersion;
+                $Parsedown = new Parsedown();
+                $package['latest']['changelog'] = $Parsedown->text($package['latest']['changelog']);
+            }
+        }
+
+        if ($updateIsAvailable === true || $packageUpdateAvailable) {
             // Calculate if this is a major update for the purpose of warning the user
             $availableMajor = $this->getMajor($updateDetails['version']);
             $installedMajor = $this->getMajor($installedVersion->value);
@@ -58,7 +86,7 @@ class UpdateController extends Controller
             $Parsedown = new Parsedown();
             $updateDetails['changelog'] = $Parsedown->text($updateDetails['changelog']);
 
-            return $this->sendSuccess(['update' => $updateDetails, 'message' => 'There is a new version of AdminUI available!', 'isMajor' => $isMajor]);
+            return $this->sendSuccess(['update' => $updateDetails, 'message' => $updateMessage, 'isMajor' => $isMajor]);
         } else {
             return $this->sendFailed('You are already using the latest version of AdminUI');
         }
