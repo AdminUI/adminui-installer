@@ -1,0 +1,53 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Application;
+use App\Http\Middleware\HandleInertiaRequests;
+use Illuminate\Foundation\Configuration\Exceptions;
+use Illuminate\Foundation\Configuration\Middleware;
+use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+return Application::configure(basePath: dirname(__DIR__))
+    ->withRouting(
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
+        health: '/up',
+        then: function () {
+            // Add route group for creating AdminUI addons routes in the application
+            Route::middleware(['adminui', 'auth:admin'])
+                ->prefix(config('adminui.prefix'))
+                ->as('admin.')
+                ->group(base_path('routes/admin-groups/admin.php'));
+        }
+    )
+    ->withMiddleware(function (Middleware $middleware) {
+        // If users are trying to access an admin page, redirect them to the admin login
+        $middleware->redirectGuestsTo(function () {
+            if (Route::is('admin.*')) {
+                return route('admin.login');
+            } else return route('login');
+        });
+
+        // Load the Inertia middleware for the frontend
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
+        ]);
+    })
+    ->withExceptions(function (Exceptions $exceptions) {
+        // Allow Inertia to handle errors on the frontend when in production mode
+        $exceptions->respond(function (Response $response, Throwable $exception, Request $request) {
+            if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [500, 503, 404, 403])) {
+                return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                    ->toResponse($request)
+                    ->setStatusCode($response->getStatusCode());
+            } elseif ($response->getStatusCode() === 419) {
+                return back()->with([
+                    'message' => 'The page expired, please try again.',
+                ]);
+            }
+
+            return $response;
+        });
+    })->create();

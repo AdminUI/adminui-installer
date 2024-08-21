@@ -2,21 +2,22 @@
 
 namespace AdminUI\AdminUIInstaller\Controllers;
 
-use AdminUI\AdminUIInstaller\Actions\CheckDatabaseConnectionAction;
-use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
-use AdminUI\AdminUIInstaller\Actions\CreateLocalComposerFileAction;
-use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
-use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
-use AdminUI\AdminUIInstaller\Actions\PublishResourcesAction;
-use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
-use AdminUI\AdminUIInstaller\Actions\SaveLicenceKeyAction;
-use AdminUI\AdminUIInstaller\Actions\SeedDatabaseAction;
-use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
-use AdminUI\AdminUIInstaller\Actions\UpdateComposerFileAction;
-use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
-use AdminUI\AdminUIInstaller\Facades\Json;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use AdminUI\AdminUIInstaller\Facades\Json;
+use AdminUI\AdminUIInstaller\Actions\SeedDatabaseAction;
+use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
+use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\SaveLicenceKeyAction;
+use AdminUI\AdminUIInstaller\Actions\PublishResourcesAction;
+use AdminUI\AdminUIInstaller\Actions\UpdateComposerFileAction;
+use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
+use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\CheckDatabaseConnectionAction;
+use AdminUI\AdminUIInstaller\Actions\CreateLocalComposerFileAction;
+use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
+use AdminUI\AdminUIInstaller\Actions\WriteLaravelElevenChangesAction;
 
 class InstallController extends Controller
 {

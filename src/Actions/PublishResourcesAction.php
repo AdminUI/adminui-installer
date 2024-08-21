@@ -2,9 +2,10 @@
 
 namespace AdminUI\AdminUIInstaller\Actions;
 
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Artisan;
+use AdminUI\AdminUIInstaller\Actions\WriteLaravelElevenChangesAction;
 
 class PublishResourcesAction
 {
@@ -38,9 +39,15 @@ class PublishResourcesAction
         ]);
         $output .= Artisan::output();
 
+        try {
+            app(WriteLaravelElevenChangesAction::class)->execute();
+        } catch (\Exception $e) {
+            $output .= "Unable to write bootstrap/app file: " . $e->getMessage();
+        }
+
         Artisan::call('config:clear');
         $output .= Artisan::output();
 
-        return Str::of($output)->explode("\n")->filter(fn ($item) => ! empty(trim($item)))->values();
+        return Str::of($output)->explode("\n")->filter(fn($item) => ! empty(trim($item)))->values();
     }
 }
