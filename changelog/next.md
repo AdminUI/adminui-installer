@@ -1,1 +1,0 @@
-- **Improvement**: Add default `bootstrap/app.php` file to installer publish function
