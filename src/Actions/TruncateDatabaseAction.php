@@ -15,7 +15,7 @@ class TruncateDatabaseAction
             'account_user',
             'addresses',
             'activity_logs',
-            'backorders',
+            'back_orders',
             'dispatch_notes',
             'emails',
             'failed_jobs',
@@ -31,7 +31,7 @@ class TruncateDatabaseAction
             'order_item_histories',
             'password_resets',
             'subscribers',
-            'webshook_calls',
+            'webhook_calls',
         ];
 
         // Disable foreign key checks

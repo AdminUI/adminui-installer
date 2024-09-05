@@ -125,9 +125,6 @@ class GoLiveCommand extends Command
         $this->info("Updating composer dependencies.");
         $composerUpdateAction->execute();
 
-
-
-
         $this->info('Hold on, we\'re nearly there, just one more step...');
         $this->info('Clearing cache');
         Artisan::call('optimize:clear');
