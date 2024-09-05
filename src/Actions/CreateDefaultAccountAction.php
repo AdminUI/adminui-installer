@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions;
+namespace AdminUI\AdminUIInstaller\Actions;
 
 class CreateDefaultAccountAction
 {

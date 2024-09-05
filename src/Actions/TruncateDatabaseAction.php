@@ -1,5 +1,7 @@
 <?php
 
+namespace AdminUI\AdminUIInstaller\Actions;
+
 use Illuminate\Support\Facades\DB;
 
 class TruncateDatabaseAction

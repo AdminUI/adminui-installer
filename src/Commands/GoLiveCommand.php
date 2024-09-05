@@ -2,14 +2,14 @@
 
 namespace AdminUI\AdminUIInstaller\Commands;
 
-use TruncateDatabaseAction;
 use Illuminate\Console\Command;
 use function Laravel\Prompts\text;
 use Illuminate\Support\Facades\Artisan;
 use AdminUI\AdminUI\Models\Configuration;
-use App\Actions\CreateDefaultAccountAction;
+use AdminUI\AdminUIInstaller\Actions\CreateDefaultAccountAction;
 use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
 use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\TruncateDatabaseAction;
 use AdminUI\AdminUIInstaller\Actions\SeedDatabaseUpdateAction;
 
 class GoLiveCommand extends Command
@@ -51,6 +51,59 @@ class GoLiveCommand extends Command
         $truncateAction = app(TruncateDatabaseAction::class);
         $defaultAction = app(CreateDefaultAccountAction::class);
 
+        $this->info('Update a few configurations');
+
+        $domain = parse_url(config('app.url'), PHP_URL_HOST);
+
+        $email = text(
+            label: 'Enter Main Email address to receive emails.',
+            default: config('settings.email') ?? 'info@' . $domain
+        );
+        $cc = text(
+            label: 'Enter a cc email address to receive copies of emails.',
+            default: config('settings.ccemail') ?? 'cc@' . $domain
+        );
+        $support = text(
+            label: 'Enter a support email address for the site.',
+            default: config('settings.support_email') ?? 'support@' . $domain
+        );
+        $google = text(
+            label: 'Enter the Google Analytics GTM ID for the site.',
+            default: config('settings.analytics__gtm_id') ?? 'GTM-XXXXXX'
+        );
+        $recaptcha = text(
+            label: 'Enter the Google Recaptcha Site Key for the site.',
+            default: config('settings.recaptcha_site_key') ?? '6LcXXXXXXXX'
+        );
+        $recaptchaSecret = text(
+            label: 'Enter the Google Recaptcha Secret Key for the site.',
+            default: config('settings.recaptcha_secret_key') ?? '6LcXXXXXXXX'
+        );
+
+        $r = Configuration::firstWhere('name', 'email');
+        $r->value = $email;
+        $r->save();
+
+        $r = Configuration::firstWhere('name', 'ccemail');
+        $r->value = $cc;
+        $r->save();
+
+        $r = Configuration::firstWhere('name', 'support_email');
+        $r->value = $support;
+        $r->save();
+
+        $r = Configuration::firstWhere('name', 'analytics__gtm_id');
+        $r->value = $google;
+        $r->save();
+
+        $r = Configuration::firstWhere('name', 'recaptcha_site_key');
+        $r->value = $recaptcha;
+        $r->save();
+
+        $r = Configuration::firstWhere('name', 'recaptcha_secret_key');
+        $r->value = $recaptchaSecret;
+        $r->save();
+
         $this->info("Running migrations.");
         $migrationsAction->execute(update: true);
 
@@ -72,39 +125,8 @@ class GoLiveCommand extends Command
         $this->info("Updating composer dependencies.");
         $composerUpdateAction->execute();
 
-        $this->info('Update a few configurations');
 
-        $email = text(
-            label: 'Enter Main Email address to receive emails.',
-            default: config('settings.email')
-        );
-        $cc = text(
-            label: 'Enter a cc email address to receive copies of emails.',
-            default: config('settings.ccemail')
-        );
-        $support = text(
-            label: 'Enter a support email address for the site.',
-            default: config('settings.support_email')
-        );
-        $google = text(
-            label: 'Enter the Google Analytics GTM ID for the site.',
-            default: config('settings.google_analytics')
-        );
-        $recaptcha = text(
-            label: 'Enter the Google Recaptcha Site Key for the site.',
-            default: config('settings.recaptcha_site_key')
-        );
-        $recaptchaSecret = text(
-            label: 'Enter the Google Recaptcha Secret Key for the site.',
-            default: config('settings.recaptcha_secret_key')
-        );
 
-        Configuration::where('name', 'email')->update(['value' => $email]);
-        Configuration::where('name', 'ccemail')->update(['value' => $cc]);
-        Configuration::where('name', 'support_email')->update(['value' => $support]);
-        Configuration::where('name', 'analytics__gtm_id')->update(['value' => $google]);
-        Configuration::where('name', 'recaptcha_site_key')->update(['value' => $recaptcha]);
-        Configuration::where('name', 'recaptcha_secret_key')->update(['value' => $recaptchaSecret]);
 
         $this->info('Hold on, we\'re nearly there, just one more step...');
         $this->info('Clearing cache');
