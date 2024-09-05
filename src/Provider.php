@@ -15,9 +15,9 @@ class Provider extends ServiceProvider
         config()->set('adminui-installer.root', $this->root);
         $this->mergeConfigFrom($this->root . '/config/adminui-installer.php', 'adminui-installer');
 
-        $this->app->singleton(\AdminUI\AdminUIInstaller\Facades\Install::class, fn () => new \AdminUI\AdminUIInstaller\Services\InstallService);
-        $this->app->singleton(\AdminUI\AdminUIInstaller\Facades\Composer::class, fn () => new \AdminUI\AdminUIInstaller\Services\ComposerService);
-        $this->app->singleton(\AdminUI\AdminUIInstaller\Facades\Json::class, fn () => new \AdminUI\AdminUIInstaller\Services\JsonService);
+        $this->app->singleton(\AdminUI\AdminUIInstaller\Facades\Install::class, fn() => new \AdminUI\AdminUIInstaller\Services\InstallService);
+        $this->app->singleton(\AdminUI\AdminUIInstaller\Facades\Composer::class, fn() => new \AdminUI\AdminUIInstaller\Services\ComposerService);
+        $this->app->singleton(\AdminUI\AdminUIInstaller\Facades\Json::class, fn() => new \AdminUI\AdminUIInstaller\Services\JsonService);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -25,6 +25,7 @@ class Provider extends ServiceProvider
                 \AdminUI\AdminUIInstaller\Commands\RefreshSiteCommand::class,
                 \AdminUI\AdminUIInstaller\Commands\UninstallCommand::class,
                 \AdminUI\AdminUIInstaller\Commands\UpdateCommand::class,
+                \AdminUI\AdminUIInstaller\Commands\GoLiveCommand::class,
             ]);
         }
 
