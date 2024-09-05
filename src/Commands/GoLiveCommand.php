@@ -12,7 +12,7 @@ use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
 use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
 use AdminUI\AdminUIInstaller\Actions\SeedDatabaseUpdateAction;
 
-class RefreshSiteCommand extends Command
+class GoLiveCommand extends Command
 {
     /**
      * The name and signature of the console command.
