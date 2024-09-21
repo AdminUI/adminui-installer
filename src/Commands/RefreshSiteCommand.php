@@ -48,7 +48,9 @@ class RefreshSiteCommand extends Command
         $dbUpdateAction = app(SeedDatabaseUpdateAction::class);
         $composerUpdateAction = app(ComposerUpdateAction::class);
 
+        $this->info("Running migrations.");
         $migrationsAction->execute(update: true);
+        $this->info("Seeding database updates.");
         $dbUpdateAction->execute();
         Artisan::call('vendor:publish', [
             '--tag' => 'adminui-public',
@@ -56,6 +58,7 @@ class RefreshSiteCommand extends Command
         ]);
 
         if (!$disableComposerUpdate) {
+            $this->info("Updating composer dependencies.");
             $composerUpdateAction->execute();
         }
 
