@@ -17,7 +17,7 @@ class RefreshSiteCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'adminui:refresh';
+    protected $signature = 'adminui:refresh {--c|no-composer}';
 
     /**
      * The console command description.
@@ -43,6 +43,7 @@ class RefreshSiteCommand extends Command
      */
     public function handle()
     {
+        $disableComposerUpdate = $this->option('no-composer');
         $migrationsAction = app(RunMigrationsAction::class);
         $dbUpdateAction = app(SeedDatabaseUpdateAction::class);
         $composerUpdateAction = app(ComposerUpdateAction::class);
@@ -54,7 +55,9 @@ class RefreshSiteCommand extends Command
             '--force' => true,
         ]);
 
-        $composerUpdateAction->execute();
+        if (!$disableComposerUpdate) {
+            $composerUpdateAction->execute();
+        }
 
         Artisan::call('optimize:clear');
 
