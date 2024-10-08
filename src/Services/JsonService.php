@@ -3,6 +3,7 @@
 namespace AdminUI\AdminUIInstaller\Services;
 
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 
 class JsonService
 {
@@ -10,7 +11,10 @@ class JsonService
 
     public function __construct()
     {
-        $this->file = config('adminui-installer.root').'/resources/status.json';
+        $this->file = config('adminui-installer.root') . '/resources/status.json';
+        if (!Storage::exists($this->file)) {
+            Storage::put($this->file, json_encode($this->getDefault()));
+        }
     }
 
     private function getDefault()

@@ -10,7 +10,7 @@ class RunMigrationsAction
     public function execute(bool $update = false)
     {
         $cmd = $update === true ? 'migrate' : 'migrate:fresh';
-        Artisan::call($cmd . " --no-interaction");
+        Artisan::call($cmd . " --no-interaction --force");
         $output = Artisan::output();
 
         return Str::of($output)
