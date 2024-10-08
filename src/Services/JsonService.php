@@ -12,6 +12,11 @@ class JsonService
     public function __construct()
     {
         $this->file = config('adminui-installer.root') . '/resources/status.json';
+        $this->checkStatusFile();
+    }
+
+    private function checkStatusFile()
+    {
         if (!Storage::exists($this->file)) {
             Storage::put($this->file, json_encode($this->getDefault()));
         }
@@ -41,6 +46,7 @@ class JsonService
     public function set(array|object $json): void
     {
         $string = json_encode($json, JSON_PRETTY_PRINT);
+        $this->checkStatusFile();
         file_put_contents($this->file, $string);
     }
 
