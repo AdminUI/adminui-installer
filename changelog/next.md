@@ -1,1 +1,0 @@
-- **BugFix**: Add `--force` to migrations action
