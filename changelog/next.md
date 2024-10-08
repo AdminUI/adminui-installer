@@ -1,1 +1,0 @@
-- **BugFix**: Check status.json file exists before attempting write
