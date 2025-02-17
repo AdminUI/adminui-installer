@@ -7,6 +7,9 @@ use Illuminate\Support\Str;
 
 class RunMigrationsAction
 {
+    /**
+     * WARNING: If `update` is not `true`, the database will be wiped
+     */
     public function execute(bool $update = false)
     {
         $cmd = $update === true ? 'migrate' : 'migrate:fresh';

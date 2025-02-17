@@ -14,7 +14,7 @@ class ComposerService
 
     public function __construct()
     {
-        $this->composer = config('adminui-installer.root').'/lib/composer.phar';
+        $this->composer = config('adminui-installer.root') . '/lib/composer.phar';
     }
 
     public function run(string|array $command)
@@ -28,9 +28,26 @@ class ComposerService
         $process = Process::fromShellCommandline($stack->implode(' '), base_path(), null, null, 300);
 
         try {
-            $process->run(fn ($type, $line) => $output->push($line));
+            if (function_exists('posix_isatty') && posix_isatty(STDOUT)) {
+                $process->setTty(true);
+                $process->run(function ($type, $buffer) {
+                    echo $buffer;
+                });
 
-            return $output;
+                if (extension_loaded('pcntl')) {
+                    $stop = function () use ($process) {
+                        $process->stop();
+                    };
+                    pcntl_async_signals(true);
+                    pcntl_signal(SIGINT, $stop);
+                    pcntl_signal(SIGQUIT, $stop);
+                    pcntl_signal(SIGTERM, $stop);
+                }
+                return;
+            } else {
+                $process->run(fn($type, $line) => $output->push($line));
+                return $output;
+            }
         } catch (ProcessSignaledException $e) {
             $output->push($e->getMessage());
 

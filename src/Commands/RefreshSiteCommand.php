@@ -5,8 +5,6 @@ namespace AdminUI\AdminUIInstaller\Commands;
 use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
 use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
 use AdminUI\AdminUIInstaller\Actions\SeedDatabaseUpdateAction;
-use AdminUI\AdminUIInstaller\Services\ApplicationService;
-use AdminUI\AdminUIInstaller\Services\DatabaseService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 

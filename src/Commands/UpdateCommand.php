@@ -15,6 +15,7 @@ use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
 use AdminUI\AdminUIInstaller\Actions\MaintenanceModeEnterAction;
 use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
 use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
+use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
 
 class UpdateCommand extends Command
 {
@@ -28,7 +29,9 @@ class UpdateCommand extends Command
         $releaseAction = app(GetLatestReleaseDetailsAction::class);
         $updateDetails = $releaseAction->execute();
 
-        $updateIsAvailable = version_compare(trim($updateDetails['version'], "v \n\r\t\v\0"), trim($installedVersion->value, "v \n\r\t\v\0"), '>');
+        $trimVersion = fn($v) => trim($v, "v \n\r\t\v\0");
+
+        $updateIsAvailable = version_compare($trimVersion($updateDetails['version']), $trimVersion($installedVersion->value), '>');
 
         if ($updateIsAvailable === false) {
             return $this->info("You're already on the latest version");
@@ -45,6 +48,7 @@ class UpdateCommand extends Command
         $validateDownloadAction = app(ValidateDownloadAction::class);
         $unpackAction = app(UnpackReleaseAction::class);
         $composerAction = app(ComposerUpdateAction::class);
+        $migrationsAction = app(RunMigrationsAction::class);
         $seedAction = app(SeedDatabaseUpdateAction::class);
         $versionAction = app(UpdateVersionEntryAction::class);
 
@@ -66,6 +70,7 @@ class UpdateCommand extends Command
 
         $unpackAction->execute();
         $composerAction->execute();
+        $migrationsAction->execute(update: true);
         $seedAction->execute();
         Artisan::call('vendor:publish', [
             '--tag' => 'adminui-public',
