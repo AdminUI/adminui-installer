@@ -1,0 +1,2 @@
+- **Improvement**: Default to PUTTY mode for composer update if available
+- **Improvement**: Run migrations in CLI update command
