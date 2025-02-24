@@ -13,7 +13,7 @@ class UtilsController extends Controller
     public function clearCache()
     {
         Artisan::call('optimize:clear');
-        Artisan::call('optimize');
+       // Artisan::call('optimize');
 
         return $this->sendSuccess();
     }
