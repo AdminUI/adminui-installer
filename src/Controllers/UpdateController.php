@@ -64,13 +64,13 @@ class UpdateController extends Controller
                     ]
                 );
                 $currentVersion = trim($packageVersion->value, "v \n\r\t\v\0");
-                $package['updateAvailable'] = version_compare(trim($package['latest']['version'], "v \n\r\t\v\0"), $currentVersion, '>');
+                $packageUpdateAvailable = version_compare(trim($package['latest']['version'], "v \n\r\t\v\0"), $currentVersion, '>');
 
                 if (!$updateIsAvailable) {
                     $updateMessage = "There are packages with updates available!";
                 }
-                $packageUpdateAvailable = true;
 
+                $package['updateAvailable'] = $packageUpdateAvailable;
                 $package['currentVersion'] = $currentVersion;
                 $Parsedown = new Parsedown();
                 $package['latest']['changelog'] = $Parsedown->text($package['latest']['changelog']);

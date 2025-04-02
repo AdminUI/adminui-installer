@@ -36,6 +36,7 @@ class UpdatePackageFromUrlAction
             throw new \Exception('Unable to extract download package');
         }
         $extractPath = $disk->path($name);
+
         $archive->extractTo($extractPath);
         $archive->close();
 

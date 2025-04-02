@@ -28,7 +28,7 @@ class ComposerService
         $process = Process::fromShellCommandline($stack->implode(' '), base_path(), null, null, 300);
 
         try {
-            if (function_exists('posix_isatty') && posix_isatty(STDOUT)) {
+            if (function_exists('posix_isatty') && defined('STDOUT') && posix_isatty(STDOUT)) {
                 $process->setTty(true);
                 $process->run(function ($type, $buffer) {
                     echo $buffer;
