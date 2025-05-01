@@ -11,7 +11,12 @@ class JsonService
 
     public function __construct()
     {
-        $this->file = config('adminui-installer.root') . '/resources/status.json';
+        $oldPath = config('adminui-installer.root') . '/resources/status.json';
+        $path = storage_path('app/adminui-installer/status.json');
+        if (file_exists($oldPath)) {
+            Storage::move($oldPath, $path);
+        }
+        $this->file = $path;
         $this->checkStatusFile();
     }
 
