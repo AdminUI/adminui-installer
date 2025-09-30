@@ -64,7 +64,10 @@ class UpdateController extends Controller
                     ]
                 );
                 $currentVersion = trim($packageVersion->value, "v \n\r\t\v\0");
-                $packageUpdateAvailable = version_compare(trim($package['latest']['version'], "v \n\r\t\v\0"), $currentVersion, '>');
+                $hasUpdate = version_compare(trim($package['latest']['version'], "v \n\r\t\v\0"), $currentVersion, '>');
+                if ($hasUpdate) {
+                    $packageUpdateAvailable = true;
+                }
 
                 if (!$updateIsAvailable) {
                     $updateMessage = "There are packages with updates available!";
