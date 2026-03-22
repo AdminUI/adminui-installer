@@ -4,6 +4,7 @@ namespace AdminUI\AdminUIInstaller\Actions;
 
 use AdminUI\AdminUIInstaller\Facades\Json;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GetLatestReleaseDetailsAction
 {
@@ -26,6 +27,7 @@ class GetLatestReleaseDetailsAction
                 throw new \Exception('Unable to fetch release information from AdminUI Server. Aborting');
             }
         });
+
 
         $releaseDetails = $response->json();
         Json::setField('releaseDetails', $releaseDetails);

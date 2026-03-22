@@ -26,6 +26,7 @@ class DownloadLatestReleaseAction
         $url = $releaseDetails['url'];
 
         $response = Http::accept('application/octet-stream')->withToken($this->key)->get($url);
+
         if ($response->successful() === true) {
             $disk = Install::getDisk();
             $disk->put($zipPath, $response->body());

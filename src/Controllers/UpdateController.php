@@ -132,6 +132,9 @@ class UpdateController extends Controller
         UpdateVersionEntryAction $versionAction
     ) {
         $log = [];
+        $log[] = "Running preliminary composer update";
+        // $composerAction->execute();
+
         $isMaintenance = App::isDownForMaintenance() === true;
         $validated = $request->validate([
             'url' => ['required', 'url'],
@@ -140,9 +143,12 @@ class UpdateController extends Controller
         ]);
 
         try {
+            $log[] = "Running cleanup action";
             $cleanupAction->execute();
+            $log[] = "Downloading AdminUI package";
             $downloadAction->execute();
             $isValid = $validateDownloadAction->execute(checksum: $validated['shasum']);
+            $log[] = "Package valid: " . $isValid;
         } catch (\Exception $err) {
             return $this->sendFailed($err->getMessage(), $log);
         }
