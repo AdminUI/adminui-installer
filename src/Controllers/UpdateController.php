@@ -133,7 +133,7 @@ class UpdateController extends Controller
     ) {
         $log = [];
         $log[] = "Running preliminary composer update";
-        // $composerAction->execute();
+        $composerAction->execute();
 
         $isMaintenance = App::isDownForMaintenance() === true;
         $validated = $request->validate([
