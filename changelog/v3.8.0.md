@@ -1,0 +1,1 @@
+- **Improvement**: Added update check v2 to support AdminUI v4 release
