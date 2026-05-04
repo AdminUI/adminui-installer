@@ -95,6 +95,81 @@ class UpdateController extends Controller
         }
     }
 
+     public function checkV2(GetLatestReleaseDetailsAction $releaseAction)
+    {
+        $packages = collect();
+        $updateDetails = $releaseAction->execute();
+
+        /* *********************************************************
+         * AdminUI Base
+         ********************************************************* */
+        $installedVersion = \AdminUI\AdminUI\Models\Configuration::where('name', 'installed_version')->firstOrCreate(
+            ['name' => 'installed_version'],
+            [
+                'label' => 'Installed Version',
+                'value' => 'v0.0.1',
+                'section' => 'private',
+                'type' => 'text',
+            ]
+        );
+        $shouldUpdateBase = true;
+        $baseData = [
+            'ref' => 'base',
+            'name' => 'AdminUI',
+            'description' => 'The base application for AdminUI'
+        ];
+        if (file_exists(base_path('packages/adminui')) === false) {
+            $shouldUpdateBase = false;
+            $baseData['error'] = "Can't update this copy of AdminUI since it appears to be outside the packages folder";
+        } elseif (file_exists(base_path('packages/adminui/.git')) === true) {
+            $shouldUpdateBase = false;
+            $baseData['error'] = "Can't update this copy of AdminUI since it is under version control";
+        }
+
+        $parsedown = new Parsedown();
+        if ($shouldUpdateBase === true) {
+            $currentVersion = trim($installedVersion->value, "v \n\r\t\v\0");
+            $availableVersion = trim($updateDetails['version'], "v \n\r\t\v\0");
+            $baseData['available'] = version_compare($availableVersion, $currentVersion, '>');
+            $baseData['isMajor'] = $this->getMajor($updateDetails['version']) > $this->getMajor($installedVersion->value);
+            $baseData['message'] = "There is a new version of AdminUI available!";
+            $baseData['currentVersion'] = $currentVersion;
+            $baseData['availableVersion'] = $availableVersion;
+            $baseData['url'] = $updateDetails['url'];
+            $baseData['changelog'] = $parsedown->text($updateDetails['changelog']);
+            $baseData['date'] = $updateDetails['date'];
+            $baseData['shasum'] = $updateDetails['shasum'];
+        }
+        $packages->push($baseData);
+
+        /* *********************************************************
+         * PACKAGES
+         ********************************************************* */
+        if (!empty($updateDetails['packages'])) {
+            foreach ($updateDetails['packages'] as $package) {
+                $packageData = [
+                    'ref' => $package['repo'],
+                    'name' => $package['name'],
+                    'description' => $package['description']
+                ];
+                $packageVersion = \AdminUI\AdminUI\Models\Configuration::firstWhere('name', 'installed_version_' . $package['repo']);
+                $currentVersion = !empty($packageVersion) ? trim($packageVersion->value, "v \n\r\t\v\0") : null;
+                $availableVersion = trim(data_get($package, 'latest.version'), "v \n\r\t\v\0");
+                $packageData['currentVersion'] = $currentVersion;
+                $packageData['availableVersion'] = $availableVersion;
+                $packageData['available'] = version_compare($availableVersion, $currentVersion, '>');
+                $packageData['isMajor'] = $this->getMajor(data_get($package, 'latest.version')) > $this->getMajor($packageVersion?->value ?? "");
+                $packageData['changelog'] = $parsedown->text(data_get($package, 'latest.changelog'));
+                $packageData['url'] = data_get($package, 'latest.downloadUrl');
+                $packageData['shasum'] = data_get($package, 'latest.shasum');
+
+                $packages->push($packageData);
+            }
+        }
+
+        return $this->sendSuccess($packages->toArray());
+    }
+
     /**
      * Refresh the AdminUI website
      */

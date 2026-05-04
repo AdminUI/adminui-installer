@@ -11,6 +11,7 @@ Route::get('/install-adminui/register', [RegisterController::class, 'index'])->n
 Route::post('/install-adminui/register', [RegisterController::class, 'store'])->name('adminui.installer.register.store');
 
 Route::get('/update-adminui/check', [UpdateController::class, 'check'])->name('adminui.update.check');
+Route::get('/update-adminui/check-v2', [UpdateController::class, 'checkV2'])->name('adminui.update.check-v2');
 Route::get('/update-adminui/refresh', [UpdateController::class, 'refresh'])->name('adminui.update.refresh');
 Route::post('/update-adminui', [UpdateController::class, 'update'])->name('adminui.update.install');
 
