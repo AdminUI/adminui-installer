@@ -1,0 +1,1 @@
+- **Improvement**: Generate `.vscode/extensions.json` file for recommending VSCode/VSCodium extensions 

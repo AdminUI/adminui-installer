@@ -9,6 +9,7 @@ use AdminUI\AdminUIInstaller\Actions\SeedDatabaseAction;
 use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
 use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
 use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
+use AdminUI\AdminUIInstaller\Actions\SetupWorkspaceAction;
 use AdminUI\AdminUIInstaller\Actions\SaveLicenceKeyAction;
 use AdminUI\AdminUIInstaller\Actions\PublishResourcesAction;
 use AdminUI\AdminUIInstaller\Actions\UpdateComposerFileAction;
@@ -100,10 +101,14 @@ class InstallController extends Controller
         );
     }
 
-    public function prepareDependencies(CreateLocalComposerFileAction $localAction, UpdateComposerFileAction $composerFileAction)
-    {
+    public function prepareDependencies(
+        CreateLocalComposerFileAction $localAction, 
+        UpdateComposerFileAction $composerFileAction, 
+        SetupWorkspaceAction $workspaceAction
+    ) {
         $localAction->execute();
         $composerFileAction->execute();
+        $workspaceAction->execute();
         Json::setField(field: 'prepareDependencies', data: true);
 
         return response()->json(
