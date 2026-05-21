@@ -1,0 +1,1 @@
+- **Improvement**: Allow necessary plugins when updating root `composer.json` file on install
