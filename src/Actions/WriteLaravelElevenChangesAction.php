@@ -23,7 +23,7 @@ class WriteLaravelElevenChangesAction
             throw new \Exception("Couldn't load local bootstrap/app.php file");
         }
 
-        $remote = "https://raw.githubusercontent.com/laravel/laravel/11.x/bootstrap/app.php";
+        $remote = "https://raw.githubusercontent.com/laravel/laravel/13.x/bootstrap/app.php";
         $response = Http::get($remote);
         if ($response->getStatusCode() !== 200) {
             throw new \Exception("Couldn't load remote bootstrap/app.php file");
@@ -35,7 +35,6 @@ class WriteLaravelElevenChangesAction
         if ($remoteHash !== $localHash) {
             throw new \Exception("Bootstrap/app.php file already modified, aborting overwrite");
         }
-
 
         $stub = file_get_contents(config('adminui-installer.root') . "/stubs/app.php.stub");
         file_put_contents($appFile, $stub);

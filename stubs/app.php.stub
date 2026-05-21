@@ -1,5 +1,6 @@
 <?php
 
+use AdminUI\AdminUI\Middleware\DisableSsrForHumans;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -33,6 +34,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Load the Inertia middleware for the frontend
         $middleware->web(append: [
             HandleInertiaRequests::class,
+            DisableSsrForHumans::class
+
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
