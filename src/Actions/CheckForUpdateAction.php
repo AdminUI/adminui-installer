@@ -9,7 +9,7 @@ class CheckForUpdateAction
     public function execute()
     {
         try {
-            DB::select('SHOW TABLES');
+            DB::connection()->getPdo();
 
             return true;
         } catch (\Exception $e) {

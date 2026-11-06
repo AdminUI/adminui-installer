@@ -8,9 +8,9 @@ use Illuminate\Support\Str;
 
 class ComposerUpdateAction
 {
-    public function execute()
+    public function execute(?callable $onOutput = null)
     {
-        $output = Composer::run('update --no-interaction --no-ansi');
+        $output = Composer::run('update --no-interaction --no-ansi', $onOutput);
         Json::setField(field: 'composerLog', data: Str::replace("\n", '', $output));
 
         return $output;

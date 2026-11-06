@@ -2,40 +2,47 @@
 
 namespace AdminUI\AdminUIInstaller\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use AdminUI\AdminUIInstaller\Facades\Json;
-use AdminUI\AdminUIInstaller\Actions\SeedDatabaseAction;
-use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
-use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\CheckDatabaseConnectionAction;
+use AdminUI\AdminUIInstaller\Actions\CheckRegistrationStatusAction;
 use AdminUI\AdminUIInstaller\Actions\ComposerUpdateAction;
-use AdminUI\AdminUIInstaller\Actions\SetupWorkspaceAction;
-use AdminUI\AdminUIInstaller\Actions\SaveLicenceKeyAction;
+use AdminUI\AdminUIInstaller\Actions\CreateLocalComposerFileAction;
+use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
+use AdminUI\AdminUIInstaller\Actions\EnableCacheSerializationAction;
+use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
 use AdminUI\AdminUIInstaller\Actions\PublishResourcesAction;
+use AdminUI\AdminUIInstaller\Actions\RunMigrationsAction;
+use AdminUI\AdminUIInstaller\Actions\SaveLicenceKeyAction;
+use AdminUI\AdminUIInstaller\Actions\SeedDatabaseAction;
+use AdminUI\AdminUIInstaller\Actions\SetupWorkspaceAction;
+use AdminUI\AdminUIInstaller\Actions\UnpackReleaseAction;
 use AdminUI\AdminUIInstaller\Actions\UpdateComposerFileAction;
 use AdminUI\AdminUIInstaller\Actions\UpdateVersionEntryAction;
-use AdminUI\AdminUIInstaller\Actions\DownloadLatestReleaseAction;
-use AdminUI\AdminUIInstaller\Actions\CheckDatabaseConnectionAction;
-use AdminUI\AdminUIInstaller\Actions\CreateLocalComposerFileAction;
-use AdminUI\AdminUIInstaller\Actions\GetLatestReleaseDetailsAction;
-use AdminUI\AdminUIInstaller\Actions\WriteLaravelElevenChangesAction;
+use AdminUI\AdminUIInstaller\Facades\Json;
+use AdminUI\AdminUIInstaller\Traits\StreamsStepOutput;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 
 class InstallController extends Controller
 {
-    public function index(CheckDatabaseConnectionAction $checkDb)
+    use StreamsStepOutput;
+
+    public function index(CheckDatabaseConnectionAction $checkDb, CheckRegistrationStatusAction $registration)
     {
         $hasDbConnection = $checkDb->execute();
         $isInstalled = Json::getField('installComplete');
 
-        // if no database connection
-        if ($hasDbConnection === false) {
-            return view('adminui-installer::no-database');
-        } elseif ($isInstalled === true) {
-            return view('adminui-installer::already-installed');
-        }
+        // The SPA renders every screen, the server only decides which one it opens on
+        $page = match (true) {
+            $hasDbConnection === false => 'no-database',
+            $isInstalled === true => 'already-installed',
+            default => 'install',
+        };
 
         return view('adminui-installer::index', [
+            'page' => $page,
             'status' => Json::get(),
+            // The register screen must stay closed once an admin exists, even if it is opened by URL hash
+            'registered' => $hasDbConnection && $registration->execute() === CheckRegistrationStatusAction::ALREADY_REGISTERED,
         ]);
     }
 
@@ -102,13 +109,15 @@ class InstallController extends Controller
     }
 
     public function prepareDependencies(
-        CreateLocalComposerFileAction $localAction, 
-        UpdateComposerFileAction $composerFileAction, 
-        SetupWorkspaceAction $workspaceAction
+        CreateLocalComposerFileAction $localAction,
+        UpdateComposerFileAction $composerFileAction,
+        SetupWorkspaceAction $workspaceAction,
+        EnableCacheSerializationAction $cacheAction
     ) {
         $localAction->execute();
         $composerFileAction->execute();
         $workspaceAction->execute();
+        $cacheAction->execute();
         Json::setField(field: 'prepareDependencies', data: true);
 
         return response()->json(
@@ -120,56 +129,42 @@ class InstallController extends Controller
 
     public function updateDependencies(ComposerUpdateAction $action)
     {
-        $action->execute();
-        Json::setField(field: 'dependencies', data: true);
-
-        return response()->json(
-            [
-                'status' => Json::get(),
-            ]
-        );
+        return $this->streamStep(function (callable $log) use ($action) {
+            $action->execute($log);
+            Json::setField(field: 'dependencies', data: true);
+        });
     }
 
     public function publishResources(PublishResourcesAction $action)
     {
-        $output = $action->execute();
-        Json::setField(field: 'publishResources', data: true);
-        Json::setField(field: 'publishResourcesLog', data: $output);
-
-        return response()->json(
-            [
-                'status' => Json::get(),
-            ]
-        );
+        return $this->streamStep(function (callable $log) use ($action) {
+            $output = $action->execute($log);
+            Json::setField(field: 'publishResources', data: true);
+            Json::setField(field: 'publishResourcesLog', data: $output);
+        });
     }
 
     public function runMigrations(RunMigrationsAction $action)
     {
-        $output = $action->execute();
-        Json::setField(field: 'runMigrations', data: true);
-        Json::setField(field: 'runMigrationsLog', data: $output);
-
-        return response()->json(
-            [
-                'status' => Json::get(),
-            ]
-        );
+        return $this->streamStep(function (callable $log) use ($action) {
+            $output = $action->execute(false, $log);
+            Json::setField(field: 'runMigrations', data: true);
+            Json::setField(field: 'runMigrationsLog', data: $output);
+        });
     }
 
     public function seedDatabase(SeedDatabaseAction $action, UpdateVersionEntryAction $versionAction)
     {
-        $output = $action->execute();
-        Json::setField(field: 'seedDatabase', data: true);
-        Json::setField(field: 'seedDatabaseLog', data: $output);
+        return $this->streamStep(function (callable $log) use ($action, $versionAction) {
+            $log("Seeding database...\n");
+            $output = $action->execute();
+            Json::setField(field: 'seedDatabase', data: true);
+            Json::setField(field: 'seedDatabaseLog', data: $output);
 
-        $releaseDetails = Json::getField('releaseDetails');
-        $versionAction->execute($releaseDetails['version']);
-        Json::setField(field: 'installComplete', data: true);
-
-        return response()->json(
-            [
-                'status' => Json::get(),
-            ]
-        );
+            $releaseDetails = Json::getField('releaseDetails');
+            $versionAction->execute($releaseDetails['version']);
+            Json::setField(field: 'installComplete', data: true);
+            $log("Database seeded.\n");
+        });
     }
 }

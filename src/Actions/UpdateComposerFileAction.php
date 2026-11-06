@@ -15,20 +15,20 @@ class UpdateComposerFileAction
 
         // Extras
         if (! isset($json['extra'])) {
-            $json['extra'] = (object) [];
+            $json['extra'] = [];
         }
         if (! isset($json['extra']['merge-plugin'])) {
-            $json['extra']['merge-plugin'] = (object) [
+            $json['extra']['merge-plugin'] = [
                 'include' => ['composer.local.json'],
             ];
         }
 
         // Config
         if (! isset($json['config'])) {
-            $json['config'] = (object) [];
+            $json['config'] = [];
         }
         if (! isset($json['config']['allow-plugins'])) {
-            $json['config']['allow-plugins'] = (object) [];
+            $json['config']['allow-plugins'] = [];
         }
 
         $json['config']['allow-plugins']['pixelfear/composer-dist-plugin'] = true;

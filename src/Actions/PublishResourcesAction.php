@@ -2,32 +2,31 @@
 
 namespace AdminUI\AdminUIInstaller\Actions;
 
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Schema;
+use AdminUI\AdminUIInstaller\Services\CallbackOutput;
 use Illuminate\Support\Facades\Artisan;
-use AdminUI\AdminUIInstaller\Actions\WriteLaravelElevenChangesAction;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
 
 class PublishResourcesAction
 {
-    public function execute()
+    public function execute(?callable $onOutput = null)
     {
+        $out = new CallbackOutput($onOutput);
+
         Artisan::call('vendor:publish', [
             '--tag' => 'adminui-setup-only',
             '--force' => true,
-        ]);
-        $output = Artisan::output();
+        ], $out);
 
         Artisan::call('vendor:publish', [
             '--tag' => 'adminui-addons-public',
             '--force' => true,
-        ]);
-        $output .= Artisan::output();
+        ], $out);
 
         Artisan::call('vendor:publish', [
             '--tag' => ['spatie-permission-config', 'spatie-permission-migrations'],
             '--force' => true,
-        ]);
-        $output .= Artisan::output();
+        ], $out);
 
         if (! Schema::hasTable('jobs')) {
             Artisan::call('queue:table');
@@ -36,18 +35,16 @@ class PublishResourcesAction
         Artisan::call('vendor:publish', [
             '--tag' => 'adminui-public',
             '--force' => true,
-        ]);
-        $output .= Artisan::output();
+        ], $out);
 
         try {
             app(WriteLaravelElevenChangesAction::class)->execute();
         } catch (\Exception $e) {
-            $output .= "Unable to write bootstrap/app file: " . $e->getMessage();
+            $out->writeln('Unable to write bootstrap/app file: '.$e->getMessage());
         }
 
-        Artisan::call('config:clear');
-        $output .= Artisan::output();
+        Artisan::call('config:clear', [], $out);
 
-        return Str::of($output)->explode("\n")->filter(fn($item) => ! empty(trim($item)))->values();
+        return Str::of($out->fetch())->explode("\n")->filter(fn ($item) => ! empty(trim($item)))->values();
     }
 }

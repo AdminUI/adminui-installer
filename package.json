@@ -1,0 +1,50 @@
+{
+    "name": "adminui-installer",
+    "version": "1.0.0",
+    "description": "",
+    "keywords": [],
+    "license": "MIT",
+    "author": "",
+    "type": "module",
+    "main": "index.js",
+    "scripts": {
+        "build": "vite build",
+        "prod": "vite build",
+        "lint": "oxlint",
+        "lint:fix": "oxlint --fix",
+        "fmt": "oxfmt",
+        "fmt:check": "oxfmt --check",
+        "prepare": "husky"
+    },
+    "dependencies": {
+        "@tailwindcss/vite": "^4.3.4",
+        "@vueuse/core": "^15.0.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "lucide-vue-next": "^1.0.0",
+        "reka-ui": "^2.11.0",
+        "tailwind-merge": "^3.7.0",
+        "tailwindcss": "^4.3.4",
+        "vue": "^3.5.44"
+    },
+    "devDependencies": {
+        "@types/node": "^26.6.6",
+        "@vitejs/plugin-vue": "^6.0.10",
+        "husky": "^9.1.7",
+        "laravel-vite-plugin": "^3.2.0",
+        "lint-staged": "^17.6.0",
+        "oxfmt": "^0.76.0",
+        "oxlint": "^1.91.0",
+        "typescript": "^5.9.3",
+        "vite": "^8.3.5",
+        "vue-tsc": "^3.3.14"
+    },
+    "packageManager": "pnpm@12.16.1+sha512.091d1dee7927575661b25dab3c2ae31cafc1c54d6b71ed6a6600cf0c1cb10434a447eae14015f1b23e2e6bedeed79df94a932e2164d2832280dce3fb32f656d1",
+    "lint-staged": {
+        "*.php": "vendor/bin/pint --preset laravel",
+        "*.{js,ts,vue}": [
+            "oxfmt",
+            "oxlint --fix"
+        ]
+    }
+}

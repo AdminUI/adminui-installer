@@ -1,2 +1,7 @@
 resources/*.json
 vendor
+.phpunit.cache
+dev/fake-release-server/storage
+tests/database/*.sqlite
+node_modules
+.env.local

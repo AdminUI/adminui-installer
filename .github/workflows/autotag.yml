@@ -1,76 +1,110 @@
 name: autotag
 
 on:
-  push:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+
+permissions:
+    contents: write
 
 jobs:
-  tag:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: "0"
+    # The installer's compiled assets ship inside the package (public/build), so build and commit them before tagging
+    build_assets:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Bump version and push tag
-        id: tag
-        uses: anothrNick/github-tag-action@v1
-        env:
-          WITH_V: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: none
-          RELEASE_BRANCHES: main
+            - uses: pnpm/action-setup@v4
 
-    outputs:
-      bump: ${{ steps.tag.outputs.part }}
-      new_tag: ${{ steps.tag.outputs.new_tag }}
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
 
-  build_release:
-    runs-on: ubuntu-latest
-    needs: tag
-    if: needs.tag.outputs.bump != 'none'
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+            - run: pnpm install --frozen-lockfile
 
-      - name: Process changelog
-        run: |
-          if [[ ! -z $(cat changelog/next.md) ]] ; then
-            mv changelog/next.md changelog/${{ needs.tag.outputs.new_tag }}.md
-            touch changelog/next.md
-          fi
+            - run: pnpm build
 
-      - name: Commit changes
-        continue-on-error: true
-        run: |
-          git config --global user.email  "noreply@dsmdesign.co.uk"
-          git config --global user.name  "AdminUI Action"
-          git add .
-          git commit -m "Github Action compiled resources"
-          git push
+            - name: Commit compiled assets
+              run: |
+                  git config --global user.email  "noreply@dsmdesign.co.uk"
+                  git config --global user.name  "AdminUI Action"
+                  git add -A public/build
+                  if git diff --cached --quiet; then
+                    echo "Assets unchanged"
+                  else
+                    git commit -m "Compile installer assets"
+                    git push
+                  fi
 
-      - name: Set changelog path
-        id: changelog_path
-        run: |
-          if [-e changelog/${TAG}.md]
-          then
-            echo "changelog=${ TAG }" >> $GITHUB_OUTPUT
-          else
-            echo "changelog=next" >> $GITHUB_OUTPUT
-          fi
-        env:
-          TAG: ${{ needs.tag.outputs.new_tag }}
+    tag:
+        runs-on: ubuntu-latest
+        needs: build_assets
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  ref: main
+                  fetch-depth: "0"
 
-      - name: Create Github release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ needs.tag.outputs.new_tag }}
-          name: Release ${{ needs.tag.outputs.new_tag }}
-          body_path: changelog/${{ steps.changelog_path.outputs.changelog }}.md
-          draft: false
-          prerelease: false
+            - name: Bump version and push tag
+              id: tag
+              uses: anothrNick/github-tag-action@v1
+              env:
+                  WITH_V: true
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  DEFAULT_BUMP: none
+                  RELEASE_BRANCHES: main
+
+        outputs:
+            bump: ${{ steps.tag.outputs.part }}
+            new_tag: ${{ steps.tag.outputs.new_tag }}
+
+    build_release:
+        runs-on: ubuntu-latest
+        needs: tag
+        if: needs.tag.outputs.bump != 'none'
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Process changelog
+              run: |
+                  if [[ ! -z $(cat changelog/next.md) ]] ; then
+                    mv changelog/next.md changelog/${{ needs.tag.outputs.new_tag }}.md
+                    touch changelog/next.md
+                  fi
+
+            - name: Commit changes
+              continue-on-error: true
+              run: |
+                  git config --global user.email  "noreply@dsmdesign.co.uk"
+                  git config --global user.name  "AdminUI Action"
+                  git add .
+                  git commit -m "Github Action compiled resources"
+                  git push
+
+            - name: Set changelog path
+              id: changelog_path
+              run: |
+                  if [-e changelog/${TAG}.md]
+                  then
+                    echo "changelog=${ TAG }" >> $GITHUB_OUTPUT
+                  else
+                    echo "changelog=next" >> $GITHUB_OUTPUT
+                  fi
+              env:
+                  TAG: ${{ needs.tag.outputs.new_tag }}
+
+            - name: Create Github release
+              id: create_release
+              uses: softprops/action-gh-release@v2
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  tag_name: ${{ needs.tag.outputs.new_tag }}
+                  name: Release ${{ needs.tag.outputs.new_tag }}
+                  body_path: changelog/${{ steps.changelog_path.outputs.changelog }}.md
+                  draft: false
+                  prerelease: false

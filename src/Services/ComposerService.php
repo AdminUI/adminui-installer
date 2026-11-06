@@ -14,10 +14,10 @@ class ComposerService
 
     public function __construct()
     {
-        $this->composer = config('adminui-installer.root') . '/lib/composer.phar';
+        $this->composer = config('adminui-installer.root').'/lib/composer.phar';
     }
 
-    public function run(string|array $command)
+    public function run(string|array $command, ?callable $onOutput = null)
     {
         $output = collect([]);
         $stack = collect([$this->phpBinary(), $this->composer]);
@@ -43,9 +43,25 @@ class ComposerService
                     pcntl_signal(SIGQUIT, $stop);
                     pcntl_signal(SIGTERM, $stop);
                 }
+                $this->assertSucceeded($process, $output);
+
                 return;
             } else {
-                $process->run(fn($type, $line) => $output->push($line));
+                // Composer's scripts (e.g. `artisan package:discover --ansi`) force colour even though we pass
+                // --no-ansi, so strip the escape codes before they reach the log shown in the browser
+                $carry = '';
+                $process->run(function ($type, $chunk) use ($output, $onOutput, &$carry) {
+                    $line = $this->stripAnsi($chunk, $carry);
+                    if ($line === '') {
+                        return;
+                    }
+                    $output->push($line);
+                    if ($onOutput !== null) {
+                        $onOutput($line);
+                    }
+                });
+                $this->assertSucceeded($process, $output);
+
                 return $output;
             }
         } catch (ProcessSignaledException $e) {
@@ -53,6 +69,42 @@ class ComposerService
 
             return $output;
         }
+    }
+
+    /**
+     * Remove ANSI escape sequences (colours, cursor movement) from a chunk of process output.
+     *
+     * Process output arrives in arbitrary chunks, so a sequence can be split across two of them. An incomplete
+     * trailing sequence is held back in $carry and prepended to the next chunk.
+     */
+    protected function stripAnsi(string $chunk, string &$carry): string
+    {
+        $chunk = $carry.$chunk;
+        $carry = '';
+
+        if (preg_match('/\e(?:\[[0-9;?]*[ -\/]*)?$/', $chunk, $match, PREG_OFFSET_CAPTURE)) {
+            $carry = $match[0][0];
+            $chunk = substr($chunk, 0, $match[0][1]);
+        }
+
+        return preg_replace('/\e\[[0-9;?]*[ -\/]*[@-~]/', '', $chunk) ?? $chunk;
+    }
+
+    /**
+     * A failed composer run must stop the install rather than letting later steps run against a half-installed app
+     */
+    protected function assertSucceeded(Process $process, $output): void
+    {
+        if ($process->isSuccessful()) {
+            return;
+        }
+
+        $detail = trim($output->implode(''));
+        $detail = $detail !== '' ? $detail : trim($process->getErrorOutput());
+
+        throw new \RuntimeException(
+            'Composer exited with code '.$process->getExitCode().($detail !== '' ? ":\n".$detail : '.')
+        );
     }
 
     protected function phpBinary()
@@ -63,7 +115,7 @@ class ComposerService
     /**
      * Get a new Symfony process instance.
      *
-     * @return \Symfony\Component\Process\Process
+     * @return Process
      */
     protected function getProcess(array $command, array $env = [])
     {

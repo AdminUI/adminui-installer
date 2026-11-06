@@ -1,10 +1,12 @@
 <?php
 
+use AdminUI\AdminUIInstaller\Controllers\AssetController;
 use AdminUI\AdminUIInstaller\Controllers\InstallController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('install-adminui')->as('adminui.installer.')->group(function () {
     Route::get('/', [InstallController::class, 'index'])->name('index');
+    Route::get('assets/{path}', AssetController::class)->where('path', '.+')->name('assets');
 
     Route::post('save-key', [InstallController::class, 'saveKey'])->name('save-key');
     Route::post('release-details', [InstallController::class, 'getLatestReleaseDetails'])->name('release-details');

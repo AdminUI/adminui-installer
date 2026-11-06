@@ -1,0 +1,4 @@
+/dev export-ignore
+/tests export-ignore
+/phpunit.xml export-ignore
+/public/build/** linguist-generated
